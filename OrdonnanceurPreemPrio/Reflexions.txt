@@ -1,0 +1,12 @@
+Réflexions pour l'implémentation de l'ordonnanceur à priorité fixe (FPP -
+Fixed-Priority Preemptive)
+
+
+La priorité d'un processus est stockée dans son PCB.
+On peut l'attribuer lors de la création du processus. Si on ne la donne pas, on
+attribue au processus une priorité par défaut (la plus basse possible donc).
+
+Entre les tâches qui ont la même priorité, on doit utiliser un round-robin
+(quel intervalle de temps on laisse à l'exécution ? )
+
+
