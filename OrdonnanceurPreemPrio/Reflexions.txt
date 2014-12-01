@@ -8,5 +8,8 @@ attribue au processus une priorité par défaut (la plus basse possible donc).
 
 Entre les tâches qui ont la même priorité, on doit utiliser un round-robin
 (quel intervalle de temps on laisse à l'exécution ? )
+-> On garde une liste chainée pour le round robin entre les mêmes priorités.
+-> on aura donc plusieurs "listeChaineePriorite"
 
+Pour gérer les différentes priorités, on utilise une liste chainée de pointeurs de listeChaineePriorite, classée par ordre de pointeur sur listeChaineePriorite décroissante.
 
