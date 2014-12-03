@@ -40,11 +40,11 @@ struct pcb_s* current_process;
 //pointeur sur le processus idle
 struct pcb_s* process_idle;
 
-void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size);
+void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size, unsigned int priority);
 
 void destroy_pcb (struct pcb_s* pcb);
 
-void create_process (func_t f, void* args, unsigned int stack_size );
+void create_process (func_t f, void* args, unsigned int stack_size, unsigned int priority);
 
 void start_current_process();
 

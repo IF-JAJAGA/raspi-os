@@ -2,15 +2,12 @@
 #include "phyAlloc.h"
 
 #define REGISTERS_NUMBER 13
+#define NB_PRIORITY 256
 
 static int pid_gb = 0;
+static struct pcb_s * priority_array[NB_PRIORITY];
 
-void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size, unsigned int priority){
-	init_pcb (pcb, args, f);
-	pcb->priority = priority;
-}
-
-void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size){
+void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size, unsigned int priority) {
 	pcb->state = NEW;
 	pcb->pid = pid_gb;
 	pid_gb++;
@@ -24,8 +21,8 @@ void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size)
 
 	pcb->f_ctx = f;
 	pcb->lr = (unsigned int) f;
-	pcb -> f_args = args;
-	pcb -> priority = 0;
+	pcb->f_args = args;
+	pcb->priority = priority;
 }
 
 void destroy_pcb (struct pcb_s* pcb){
@@ -35,9 +32,9 @@ void destroy_pcb (struct pcb_s* pcb){
 
 }
 
-void create_process (func_t f, void* args, unsigned int stack_size ){
+void create_process (func_t f, void* args, unsigned int stack_size, unsigned int priority){
 	struct pcb_s* pcb = (struct pcb_s *) phyAlloc_alloc(sizeof(struct pcb_s));
-	init_pcb(pcb, args, f, stack_size);
+	init_pcb(pcb, args, f, stack_size, priority);
 
 	//Ajout du nouveau processus à la suite de la tête de liste
 	if ( first_process != NULL ){
@@ -93,7 +90,8 @@ void elect (){
 void start_sched(){
 	//Création du process_idle qui permet l'initialisation de la chaîne de processus
 	process_idle = phyAlloc_alloc(sizeof(struct pcb_s));
-	init_pcb(process_idle, NULL, NULL, STACK_SIZE);
+	// Idle ne se sert pas de sa priorite: il n'est pas ordonne de la meme facon que les autres
+	init_pcb(process_idle, NULL, NULL, STACK_SIZE, 0);
 	process_idle->nextProcess = first_process;
 	current_process = process_idle->nextProcess;
 
