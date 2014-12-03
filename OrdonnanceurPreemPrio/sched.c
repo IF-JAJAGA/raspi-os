@@ -5,6 +5,11 @@
 
 static int pid_gb = 0;
 
+void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size, unsigned int priority){
+	init_pcb (pcb, args, f);
+	pcb->priority = priority;
+}
+
 void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size){
 	pcb->state = NEW;
 	pcb->pid = pid_gb;
@@ -20,6 +25,7 @@ void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size)
 	pcb->f_ctx = f;
 	pcb->lr = (unsigned int) f;
 	pcb -> f_args = args;
+	pcb -> priority = 0;
 }
 
 void destroy_pcb (struct pcb_s* pcb){
