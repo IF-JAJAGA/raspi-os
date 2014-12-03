@@ -5,6 +5,6 @@
 #define FIRST_LVL_TT_SIZE	FIRST_LVL_TT_COUN*4 // 16 384 o 
 #define TOTAL_TT_SIZE		FIRST_LVL_TT_SIZE + SECOND_LVL_TT_SIZE*FIRST_LVL_TT_COUN // 16 793 600 o
 
-uint32_t device_flags;
+//uint32_t device_flags;
 
 
