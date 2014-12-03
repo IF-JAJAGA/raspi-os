@@ -13,3 +13,4 @@ Entre les tâches qui ont la même priorité, on doit utiliser un round-robin
 
 Pour gérer les différentes priorités, on utilise une liste chainée de pointeurs de listeChaineePriorite, classée par ordre de pointeur sur listeChaineePriorite décroissante.
 
+Nouveauté : file à priorité
