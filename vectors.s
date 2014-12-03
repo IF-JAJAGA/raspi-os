@@ -51,7 +51,7 @@ reset:
 
 hang: b hang
 undefined:	 b undefined
-swi:	 b SWIHandler
+swi:	 b swi
 prefetch:	b prefetch
 data:	 b data
 unused:	b unused
@@ -91,7 +91,6 @@ dummy:
     bx lr
 irq:
     b ctx_switch_from_irq
-	
 
 	
 ;@-------------------------------------------------------------------------

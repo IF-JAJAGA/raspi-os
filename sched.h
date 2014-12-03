@@ -29,6 +29,8 @@ struct pcb_s {
 	void* f_args;
 	//pointeur vers le prochain pcb
 	struct pcb_s* nextProcess;
+	//Priorite associee au processus
+	unsigned int priority;
 };
 
 //pointeur sur la tête de la liste
