@@ -65,6 +65,7 @@ void create_process (func_t f, void* args, unsigned int stack_size, unsigned int
 	struct pcb_s* pcb = (struct pcb_s *) phyAlloc_alloc(sizeof(struct pcb_s));
 	init_pcb(pcb, args, f, stack_size, priority);
 
+	/*	Remplacé par la liste de priorité et la fonction elect.
 	//Ajout du nouveau processus à la suite de la tête de liste
 	if ( first_process != NULL ){
 		//orienter le pointeur nextProcess du nouveau processus vers le
@@ -79,6 +80,7 @@ void create_process (func_t f, void* args, unsigned int stack_size, unsigned int
 		pcb->nextProcess = pcb;
 		first_process = pcb;
 	}
+	*/
 }
 
 void start_current_process() {
@@ -88,6 +90,7 @@ void start_current_process() {
 	current_process->state = TERMINATED;
 }
 
+//TODO
 void elect (){
 	while(current_process -> nextProcess -> state == TERMINATED){
 		struct pcb_s* dead_process = current_process -> nextProcess;
