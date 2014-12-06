@@ -5,7 +5,7 @@
 #define NB_PRIORITY 256
 
 static int pid_gb = 0;
-static struct pcb_s * priority_array[NB_PRIORITY];
+static struct pcb_s * priority_array[NB_PRIORITY] = {NULL};
 
 void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size, unsigned int priority) {
 	pcb->state = NEW;
@@ -23,13 +23,42 @@ void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size,
 	pcb->lr = (unsigned int) f;
 	pcb->f_args = args;
 	pcb->priority = priority;
+
+	//Ajout du process dans la liste des priorités
+	if(priority_array[NB_PRIORITY-1-priority]==NULL){
+		priority_array[NB_PRIORITY-1-priority] = pcb;
+	}
+	else{
+		//On se rajoute à la liste de processus de même priorité.
+		struct pcb_s *pcb_same_prio_first = priority_array[NB_PRIORITY-1-priority];
+		struct pcb_s *pcb_same_prio = pcb_same_prio_first;
+		while(pcb_same_prio->nextProcess != pcb_same_prio_first){
+			pcb_same_prio = pcb_same_prio -> nextProcess;
+		}
+		//On doit être à la fin de la liste.
+		pcb -> nextProcess = pcb_same_prio_first;
+		pcb_same_prio -> nextProcess = pcb; 
+	}
 }
 
 void destroy_pcb (struct pcb_s* pcb){
+	//On s'enlève de la liste des priorités.
+	//Si on est le seul avec notre priorité, on met la case à NULL.
+	if(pcb -> nextProcess == pcb){
+		priority_array[NB_PRIORITY - 1 - pcb->priority] = NULL;
+	}
+	else{
+		struct pcb_s *pcb_same_prio = priority_array[NB_PRIORITY - 1 - pcb->priority];
+		while(pcb_same_prio -> nextProcess != pcb){
+			pcb_same_prio = pcb_same_prio -> nextProcess;		
+		}
+		//On se situe juste avant le processus à supprimer.
+		pcb_same_prio -> nextProcess = pcb -> nextProcess;
+	}
+
 	//libération de l'espace alloué pour le processus supprimé
 	phyAlloc_free ((void*)pcb -> sp, sizeof (STACK_SIZE));
 	phyAlloc_free (pcb, sizeof(struct pcb_s));
-
 }
 
 void create_process (func_t f, void* args, unsigned int stack_size, unsigned int priority){

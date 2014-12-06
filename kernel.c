@@ -20,8 +20,8 @@ void funcB () {
 int kmain (void) {
 	init_hw ();
 	
-	create_process(funcB,NULL,STACK_SIZE);
-	create_process(funcA,NULL,STACK_SIZE);
+	create_process(funcB,NULL,STACK_SIZE,1);
+	create_process(funcA,NULL,STACK_SIZE,2);
 
 	start_sched();
 	while (1){}
