@@ -90,8 +90,22 @@ void start_current_process() {
 	current_process->state = TERMINATED;
 }
 
-//TODO
 void elect (){
+	//Parcours dans la liste de priorité. Que l'on a trouvé une case non vide, on élit un process
+	//parmi la liste chainée.
+	//TODO : Question d'utiliser current_process si pas null ?
+	struct pcb_s *process_prio = NULL;
+	int i = 0;
+	while(process_prio == NULL){
+		if(priority_array[i] != NULL){
+			process_prio = priority_array[i];
+		}
+		else {
+			i++;
+		}
+	}
+	
+	//TODO : code à adapter selon la liste de priorité
 	while(current_process -> nextProcess -> state == TERMINATED){
 		struct pcb_s* dead_process = current_process -> nextProcess;
 
