@@ -35,7 +35,7 @@ struct pcb_s {
 const unsigned int WORD_SIZE;
 const unsigned int NUMBER_REGISTERS;
 
-void
+struct pcb_s *
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
 
 void

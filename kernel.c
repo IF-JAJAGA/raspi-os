@@ -17,7 +17,7 @@ funcA(void *a)
 	struct done_s *d = (struct done_s *) a;
 	long cptA = 1;
 
-	for (;cptA > 0;) {
+	while (cptA > 0) {
 		cptA += 32;
 	}
 	cptA = 0;
@@ -30,7 +30,7 @@ funcB(void *a)
 	struct done_s *d = (struct done_s *) a;
 	int cptB = 1;
 
-	for (;cptB < 2147483647;) {
+	while (cptB < 2147483647) {
 		cptB += 2;
 	}
 	d->curr++;

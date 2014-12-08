@@ -61,22 +61,6 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 	pcb->args = args;
 	pcb->priority = priority;
 
-	// Adding process to priority array
-	if (priority_array[NB_PRIORITY-1-priority]==NULL){
-		priority_array[NB_PRIORITY-1-priority] = pcb;
-	}
-	else {
-		//On se rajoute à la liste de processus de même priorité.
-		struct pcb_s *pcb_same_prio_first = priority_array[NB_PRIORITY-1-priority];
-		struct pcb_s *pcb_same_prio = pcb_same_prio_first;
-		while(pcb_same_prio->next != pcb_same_prio_first){
-			pcb_same_prio = pcb_same_prio -> next;
-		}
-		//On doit être à la fin de la liste.
-		pcb -> next = pcb_same_prio_first;
-		pcb_same_prio -> next = pcb; 
-	}
-
 	return pcb;
 }
 
@@ -165,15 +149,16 @@ elect()
 	current_ps->state = STATE_PAUSED;
 	struct pcb_s *previous_ps = current_ps;
 
-	// TODO adapt to priority
-	current_ps = highest_priority(0);
-
-	next_alive(current_ps);
+	do {
+		current_ps = highest_priority(0);
+		current_ps = next_alive(current_ps->previous);
+	} while (current_ps == NULL);
 
 	// Should the highest priority process be the same as before
 	if (previous_ps == current_ps) {
-		// We elect the next element in the circular list
-		current_ps = current_ps->next;
+		// We elect the next (non zombie) element in the circular list
+		// Note: it cannot be NULL as there is at least one alive (see above)
+		current_ps = next_alive(current_ps);
 	}
 
 	current_ps->state = STATE_EXECUTING;
@@ -181,45 +166,32 @@ elect()
 
 //------------------------------------------------------------------------
 
-void
+struct pcb_s *
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority)
 {
 	DISABLE_IRQ();
+
 	struct pcb_s *new_ps = init_pcb(f, args, stack_size_words, priority);
 
-	/*	Remplacé par la liste de priorité et la fonction elect.
-	//Ajout du nouveau processus à la suite de la tête de liste
-	if ( first_process != NULL ){
-		//orienter le pointeur nextProcess du nouveau processus vers le
-		//processus que pointait first_process
-		pcb->nextProcess = first_process->nextProcess;
-		//ré-orienter pointeur nextProcess du first_process vers le processus
-		//nouvellement créé
-		first_process->nextProcess = pcb;
+	struct pcb_s *pcb_first = priority_array[NB_PRIORITY - 1 - new_ps->priority];
+	// Adding process to priority array
+	if (pcb_first == NULL) {
+		priority_array[NB_PRIORITY - 1 - new_ps->priority] = new_ps;
+		new_ps->next = new_ps;
+		new_ps->previous = new_ps;
 	}
-	else{
-		//Création du first_process qui boucle sur lui-même vu qu'il est tout seul
-		pcb->nextProcess = pcb;
-		first_process = pcb;
-	}
-	*/
-
-	if (!current_ps)
-	{
-		// Single element list
-		current_ps           = new_ps;
-		current_ps->previous = new_ps;
-		current_ps->next     = new_ps;
-	}
-	else
-	{
-		// Inserting new_ps BEFORE current_ps
+	else {
+		// If there is already someone, we insert ourself to the list
+		// Inserting BEFORE current_ps
 		new_ps->previous = current_ps->previous;
 		new_ps->next = current_ps;
 		current_ps->previous->next = new_ps;
 		current_ps->previous = new_ps;
 	}
+
 	ENABLE_IRQ();
+
+	return new_ps;
 }
 
 void
@@ -245,18 +217,18 @@ __attribute__((naked)) ctx_switch()
 }
 
 void
-__attribute__((naked)) ctx_switch_from_irq()
+ctx_switch_from_irq()
 {
 	DISABLE_IRQ();
+
+	__asm("sub lr, lr, #4");
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
 	// Saving current context
 	__asm("push {r0-r12, lr}");
 	__asm("mov %0, lr" : "= r" (current_ps->instruction));
 	__asm("mov %0, sp" : "= r" (current_ps->stack));
-
-	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
 
 	// Electing the next current_ps
 	elect();
@@ -275,9 +247,8 @@ __attribute__((naked)) ctx_switch_from_irq()
 void
 start_sched(unsigned int stack_size_words)
 {
-	init_ps = init_pcb(NULL, NULL, stack_size_words, 0);
+	init_ps = create_process(NULL, NULL, stack_size_words, 0);
 
-	init_ps->next = current_ps;
 	current_ps = init_ps;
 
 	set_tick_and_enable_timer();
