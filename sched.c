@@ -81,7 +81,7 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 }
 
 static void
-free_process(struct pcb_s *zombie)
+remove_priority(struct pcb_s *zombie)
 {
 	//On s'enlève de la liste des priorités.
 	//Si on est le seul avec notre priorité, on met la case à NULL.
@@ -96,6 +96,14 @@ free_process(struct pcb_s *zombie)
 		//On se situe juste avant le processus à supprimer.
 		pcb_same_prio -> next = zombie -> next;
 	}
+}
+
+static void
+free_process(struct pcb_s *zombie)
+{
+	// Removes the process from the priority array
+	remove_priority(zombie);
+
 	// Deallocating
 	phyAlloc_free(zombie->stack, zombie->stack_size_words);
 	phyAlloc_free(zombie, sizeof(zombie));
@@ -119,45 +127,53 @@ highest_priority(unsigned int i)
 	return process_prio;
 }
 
+/**
+ * Chooses the next process alive (not STATE_ZOMBIE) in the linked list given.
+ * If there is no next process alive (all STATE_ZOMBIE), it returns NULL
+ */
+static struct pcb_s *
+next_alive(struct pcb_s *first_pcb)
+{
+	struct pcb_s *iterator_ps = first_pcb->next;
+	if (STATE_ZOMBIE == iterator_ps->state) {
+		while (STATE_ZOMBIE == iterator_ps->state && iterator_ps != first_pcb) {
+			// Deleting current_ps from the list
+			current_ps->previous->next = current_ps->next;
+			current_ps->next->previous = current_ps->previous;
+
+			struct pcb_s *next = iterator_ps->next;
+
+			// Deallocating the memory of the ZOMBIE
+			free_process(iterator_ps);
+
+			// Switching to the next element
+			iterator_ps = next;
+		}
+
+		if (STATE_ZOMBIE == iterator_ps->state) {
+			// There are no process that wants to execute anything
+			// TOO MANY ZOMBIES!!
+			return NULL;
+		}
+	}
+	return iterator_ps;
+}
+
 static void
 elect()
 {
 	current_ps->state = STATE_PAUSED;
 	struct pcb_s *previous_ps = current_ps;
 
-	// Switching to the next element in the circular list
 	// TODO adapt to priority
 	current_ps = highest_priority(0);
 
+	next_alive(current_ps);
+
 	// Should the highest priority process be the same as before
-	// we elect the next process of the circular linked list
 	if (previous_ps == current_ps) {
+		// We elect the next element in the circular list
 		current_ps = current_ps->next;
-	}
-
-	if (STATE_ZOMBIE == current_ps->state) {
-		while (STATE_ZOMBIE == current_ps->state && current_ps != previous_ps) {
-			// Deleting current_ps from the list
-			current_ps->previous->next = current_ps->next;
-			current_ps->next->previous = current_ps->previous;
-
-			struct pcb_s *next = current_ps->next;
-
-			// Deallocating the memory of the ZOMBIE
-			free_process(current_ps);
-
-			// Switching to the next element
-			current_ps = next;
-		}
-
-		if (STATE_ZOMBIE == current_ps->state) {
-			// There are no process that wants to execute anything
-			// TOO MANY ZOMBIES!!
-
-			// We tell init_ps to free the last zombie
-			init_ps->next = current_ps;
-			current_ps = init_ps;
-		}
 	}
 
 	current_ps->state = STATE_EXECUTING;
