@@ -1,53 +1,56 @@
-#include "hw.h"
+#ifndef SCHED_H
+#define SCHED_H
 
-// STACK_SIZE doit être suffisament grand pour contenir les éléments de contexte,
-// les éventuels paramètres des différentes fonctions ainsi que le code lui-même
-// Puisqu'on y trouve des boucles infinies, on choisit une variable assez grande
-// pour contenir un bon nombre d'informations et pas trop grande pour pouvoir tourner
-// sur le Raspberry Pi.
-#define STACK_SIZE 1024
+#include <stdlib.h>
+#include <stdint.h>
 
-#define NULL 0
+typedef void (*func_t) (void *);
 
-typedef void (*func_t) (void*);
-typedef enum {NEW, READY, RUNNING, WAITING, TERMINATED} processState;
+enum state_e {STATE_NEW, STATE_EXECUTING, STATE_WAITING, STATE_PAUSED, STATE_ZOMBIE};
 
-// structure concernant le PCB
+extern struct pcb_s *current_ps;
+
 struct pcb_s {
-	// id du processus concerné
-	int pid;
-	// état du processus concerné
-	processState state;
-	// contexte lié au processus concerné
-	// pointeur de pile
-	unsigned int sp;
-	// adresse de l'instruction en cours
-	unsigned int lr;
-	//fonction associée au contexte
-	func_t f_ctx;
-	//ainsi que ses arguments
-	void* f_args;
-	//pointeur vers le prochain pcb
-	struct pcb_s* nextProcess;
+	// Stored in a circular doubly linked list
+	struct pcb_s *previous;
+	struct pcb_s *next;
+
+	unsigned int  pid;
+	enum state_e  state;
+
+	uint32_t      *stack;
+
+	// The stack size (in words)
+	unsigned int  stack_size_words;
+
+	// First instruction to execute (when started)
+	func_t        entry_point;
+	// Pointer to the current instruction (lr register)
+	func_t        instruction;
+	void         *args;
+	
+	//compteur de quantum avant réveil si process en PAUSE
+	unsigned int qtCount;
 };
 
-//pointeur sur la tête de la liste
-struct pcb_s* first_process;
-//pointeur sur le processus courant
-struct pcb_s* current_process;
-//pointeur sur le processus idle
-struct pcb_s* process_idle;
+// GLOBAL
+const unsigned int WORD_SIZE;
+const unsigned int NUMBER_REGISTERS;
 
-void init_pcb (struct pcb_s* pcb, void* args, func_t f, unsigned int stack_size);
+void
+create_process(func_t f, void *args, unsigned int stack_size_words);
 
-void destroy_pcb (struct pcb_s* pcb);
+void
+ctx_switch();
 
-void create_process (func_t f, void* args, unsigned int stack_size );
+void
+ctx_switch_from_irq();
 
-void start_current_process();
+void
+start_sched();
 
-void start_sched();
+void
+end_sched();
 
-void __attribute__ ((naked)) ctx_switch_from_irq();
+#endif
 
-//void idle();
