@@ -6,7 +6,9 @@
 
 typedef void (*func_t) (void *);
 
-enum state_e {STATE_NEW, STATE_EXECUTING, STATE_PAUSED, STATE_ZOMBIE};
+enum state_e {STATE_NEW, STATE_EXECUTING, STATE_WAITING, STATE_PAUSED, STATE_ZOMBIE};
+
+extern struct pcb_s *current_ps;
 
 struct pcb_s {
 	// Stored in a circular doubly linked list

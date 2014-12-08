@@ -12,10 +12,11 @@ static const unsigned int CPSR_SVC_NO_IRQ = 0x53; // Supervisor mode (with no in
 static const unsigned int CPSR_SVC_IRQ = 0x13; // Supervisor mode (with interrupts)
 
 // Initialized to NULL (when not allocated)
-static struct pcb_s *current_ps = NULL;
 static struct pcb_s *init_ps    = NULL;
 
 static unsigned int process_count = 0;
+
+struct pcb_s *current_ps = NULL;
 
 static void
 start_current_process()
@@ -56,6 +57,7 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words)
 	pcb->entry_point = f;
 	pcb->instruction = NULL;
 	pcb->args = args;
+	pcb->qtCount = 0;
 
 	return pcb;
 }
@@ -74,7 +76,7 @@ elect()
 	struct pcb_s *first = current_ps;
 
 	if (STATE_EXECUTING == current_ps->state) {
-		current_ps->state = STATE_PAUSED;
+		current_ps->state = STATE_WAITING;
 	}
 	// Switching to the next element in the circular list
 	current_ps = current_ps->next;
@@ -102,6 +104,13 @@ elect()
 			// We tell init_ps to free the last zombie
 			init_ps->next = current_ps;
 			current_ps = init_ps;
+		}
+	}
+	else if (STATE_PAUSED == current_ps->state){
+		current_ps->qtCount--;
+		if (current_ps->qtCount){
+			current_ps = current_ps->next;
+			elect();
 		}
 	}
 

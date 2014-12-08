@@ -1,14 +1,21 @@
+#include "hw.h"
 #include "syscall.h"
 #include "sched.h"
 
-void __attribute__ ((naked)) sys_reboot(){
+void PUT32 ( unsigned int, unsigned int );
+
+void sys_reboot(){
+	DISABLE_IRQ();
+	
 	//Ecrit dans r0 le numéro de l'appel système sys_reboot, i.e. 1
 	__asm("mov r0, %0" : : "r"(1) : "r0");
 	//Déclenche une interruption logicielle
 	__asm("SWI 0" : : : "lr");
 }
 
-void __attribute__ ((naked)) sys_wait(unsigned int nbQuantums){
+void sys_wait(unsigned int nbQuantums){
+	DISABLE_IRQ();
+	
 	//Ecrit dans r1 nbQuantums
 	__asm("mov r1, %0" : : "r"(nbQuantums) : "r1");
 	//Ecrit dans r0 le numéro de l'appel système sys_wait, i.e. 2
@@ -27,6 +34,7 @@ void __attribute__ ((naked)) SWIHandler(){
 		case 2 : doSysCallWait();
 					break;
 	}
+	ENABLE_IRQ();
 }
 
 void __attribute__ ((naked)) doSysCallReboot(){
@@ -45,6 +53,10 @@ void __attribute__ ((naked)) doSysCallWait(){
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
 	//Mise en pause du current process
-	current_process->state = PAUSED;
-	current_process->qtCount = nbQuantums;
+	current_ps->state = STATE_PAUSED;
+	//Sauvegarde du nbre de quantums à attendre pour le process
+	current_ps->qtCount = nbQuantums;
+	
+	ctx_switch_from_irq();
+	
 }
