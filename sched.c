@@ -182,11 +182,11 @@ create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int
 	}
 	else {
 		// If there is already someone, we insert ourself to the list
-		// Inserting BEFORE current_ps
-		new_ps->previous = current_ps->previous;
-		new_ps->next = current_ps;
-		current_ps->previous->next = new_ps;
-		current_ps->previous = new_ps;
+		// Inserting BEFORE pcb_first
+		new_ps->previous = pcb_first->previous;
+		new_ps->next = pcb_first;
+		pcb_first->previous->next = new_ps;
+		pcb_first->previous = new_ps;
 	}
 
 	ENABLE_IRQ();

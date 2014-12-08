@@ -49,7 +49,7 @@ kmain ( void )
 	done.curr = 0;
 
 	// Initialize all ctx
-	create_process(funcA, &done, STACK_SIZE_WORDS, 1);
+	create_process(funcA, &done, STACK_SIZE_WORDS, 2);
 	create_process(funcB, &done, STACK_SIZE_WORDS, 2);
 
 	start_sched(STACK_SIZE_WORDS);
