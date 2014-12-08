@@ -3,10 +3,13 @@
 #include "phyAlloc.h"
 
 // GLOBAL
+#define NB_PRIORITY 256
+
 const unsigned int WORD_SIZE = 4; // ARM word size (32 bits)
 const unsigned int NUMBER_REGISTERS = 14; // 13 all purpose registers (r0-r12) + lr
 
 // STATIC
+static struct pcb_s * priority_array[NB_PRIORITY] = {NULL};
 
 static const unsigned int CPSR_SVC_NO_IRQ = 0x53; // Supervisor mode (with no interrupts)
 static const unsigned int CPSR_SVC_IRQ = 0x13; // Supervisor mode (with interrupts)
@@ -28,7 +31,7 @@ start_current_process()
 }
 
 static struct pcb_s *
-init_pcb(func_t f, void *args, unsigned int stack_size_words)
+init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int priority)
 {
 	struct pcb_s *pcb = (struct pcb_s *) phyAlloc_alloc(sizeof(struct pcb_s));
 
@@ -56,6 +59,23 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words)
 	pcb->entry_point = f;
 	pcb->instruction = NULL;
 	pcb->args = args;
+	pcb->priority = priority;
+
+	// Adding process to priority array
+	if (priority_array[NB_PRIORITY-1-priority]==NULL){
+		priority_array[NB_PRIORITY-1-priority] = pcb;
+	}
+	else {
+		//On se rajoute à la liste de processus de même priorité.
+		struct pcb_s *pcb_same_prio_first = priority_array[NB_PRIORITY-1-priority];
+		struct pcb_s *pcb_same_prio = pcb_same_prio_first;
+		while(pcb_same_prio->next != pcb_same_prio_first){
+			pcb_same_prio = pcb_same_prio -> next;
+		}
+		//On doit être à la fin de la liste.
+		pcb -> next = pcb_same_prio_first;
+		pcb_same_prio -> next = pcb; 
+	}
 
 	return pcb;
 }
@@ -63,25 +83,60 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words)
 static void
 free_process(struct pcb_s *zombie)
 {
+	//On s'enlève de la liste des priorités.
+	//Si on est le seul avec notre priorité, on met la case à NULL.
+	if(zombie -> next == zombie){
+		priority_array[NB_PRIORITY - 1 - zombie->priority] = NULL;
+	}
+	else{
+		struct pcb_s *pcb_same_prio = priority_array[NB_PRIORITY - 1 - zombie->priority];
+		while(pcb_same_prio -> next != zombie){
+			pcb_same_prio = pcb_same_prio -> next;
+		}
+		//On se situe juste avant le processus à supprimer.
+		pcb_same_prio -> next = zombie -> next;
+	}
 	// Deallocating
 	phyAlloc_free(zombie->stack, zombie->stack_size_words);
 	phyAlloc_free(zombie, sizeof(zombie));
 }
 
+static struct pcb_s *
+highest_priority(unsigned int i)
+{
+	//Parcours dans la liste de priorité. Dès que l'on a trouvé une case non vide, on élit un process
+	//parmi la liste chainée.
+	//TODO : Question d'utiliser current_process si pas null ?
+	struct pcb_s *process_prio = NULL;
+	while(process_prio == NULL){
+		if(priority_array[i] != NULL){
+			process_prio = priority_array[i];
+		}
+		else {
+			i++;
+		}
+	}
+	return process_prio;
+}
+
 static void
 elect()
 {
-	struct pcb_s *first = current_ps;
+	current_ps->state = STATE_PAUSED;
+	struct pcb_s *previous_ps = current_ps;
 
-	if (STATE_EXECUTING == current_ps->state) {
-		current_ps->state = STATE_PAUSED;
-	}
 	// Switching to the next element in the circular list
-	current_ps = current_ps->next;
+	// TODO adapt to priority
+	current_ps = highest_priority(0);
+
+	// Should the highest priority process be the same as before
+	// we elect the next process of the circular linked list
+	if (previous_ps == current_ps) {
+		current_ps = current_ps->next;
+	}
 
 	if (STATE_ZOMBIE == current_ps->state) {
-		while (STATE_ZOMBIE == current_ps->state && current_ps != first)
-		{
+		while (STATE_ZOMBIE == current_ps->state && current_ps != previous_ps) {
 			// Deleting current_ps from the list
 			current_ps->previous->next = current_ps->next;
 			current_ps->next->previous = current_ps->previous;
@@ -111,10 +166,27 @@ elect()
 //------------------------------------------------------------------------
 
 void
-create_process(func_t f, void *args, unsigned int stack_size_words)
+create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority)
 {
 	DISABLE_IRQ();
-	struct pcb_s *new_ps = init_pcb(f, args, stack_size_words);
+	struct pcb_s *new_ps = init_pcb(f, args, stack_size_words, priority);
+
+	/*	Remplacé par la liste de priorité et la fonction elect.
+	//Ajout du nouveau processus à la suite de la tête de liste
+	if ( first_process != NULL ){
+		//orienter le pointeur nextProcess du nouveau processus vers le
+		//processus que pointait first_process
+		pcb->nextProcess = first_process->nextProcess;
+		//ré-orienter pointeur nextProcess du first_process vers le processus
+		//nouvellement créé
+		first_process->nextProcess = pcb;
+	}
+	else{
+		//Création du first_process qui boucle sur lui-même vu qu'il est tout seul
+		pcb->nextProcess = pcb;
+		first_process = pcb;
+	}
+	*/
 
 	if (!current_ps)
 	{
@@ -187,7 +259,7 @@ __attribute__((naked)) ctx_switch_from_irq()
 void
 start_sched(unsigned int stack_size_words)
 {
-	init_ps = init_pcb(NULL, NULL, stack_size_words);
+	init_ps = init_pcb(NULL, NULL, stack_size_words, 0);
 
 	init_ps->next = current_ps;
 	current_ps = init_ps;

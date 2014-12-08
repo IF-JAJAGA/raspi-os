@@ -26,6 +26,9 @@ struct pcb_s {
 	// Pointer to the current instruction (lr register)
 	func_t        instruction;
 	void         *args;
+
+	// Priority assigned to the process 0 is lowest, NB_PRIORITY - 1 highest
+	unsigned int priority;
 };
 
 // GLOBAL
@@ -33,7 +36,7 @@ const unsigned int WORD_SIZE;
 const unsigned int NUMBER_REGISTERS;
 
 void
-create_process(func_t f, void *args, unsigned int stack_size_words);
+create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
 
 void
 ctx_switch();
