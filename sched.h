@@ -10,7 +10,7 @@
 #define NULL 0
 
 typedef void (*func_t) (void*);
-typedef enum {NEW, READY, RUNNING, WAITING, TERMINATED} processState;
+typedef enum {NEW, READY, RUNNING, WAITING, PAUSED, TERMINATED} processState;
 
 // structure concernant le PCB
 struct pcb_s {
@@ -29,6 +29,8 @@ struct pcb_s {
 	void* f_args;
 	//pointeur vers le prochain pcb
 	struct pcb_s* nextProcess;
+	//compteur de quantum avant réveil si process en PAUSE
+	unsigned int qtCount;
 };
 
 //pointeur sur la tête de la liste
