@@ -16,29 +16,27 @@ static const unsigned int CPSR_SVC_IRQ = 0x13; // Supervisor mode (with interrup
 
 // Initialized to NULL (when not allocated)
 static struct pcb_s *current_ps = NULL;
-static struct pcb_s *init_ps    = NULL;
+static struct pcb_s *idle_ps    = NULL;
 
 static unsigned int process_count = 0;
 
 static void
-start_current_process()
-{
+start_current_process() {
 	current_ps->state = STATE_EXECUTING;
 
 	current_ps->entry_point(current_ps->args);
 
 	current_ps->state = STATE_ZOMBIE;
-	
-	// Switch to next process
+
+	// Switch to next process, never returning (zombie will be erased)
 	ctx_switch_from_irq();
 }
 
 static struct pcb_s *
-init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int priority)
-{
+init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int priority) {
 	struct pcb_s *pcb = (struct pcb_s *) phyAlloc_alloc(sizeof(struct pcb_s));
 
-	pcb->pid = process_count++;
+	pcb->pid = ++process_count;
 	pcb->state = STATE_NEW;
 	pcb->stack_size_words = stack_size_words;
 
@@ -68,9 +66,9 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 }
 
 static void
-remove_priority(struct pcb_s *zombie)
-{
-	struct pbc_s **first = &priority_array[NB_PRIORITY - 1 - zombie->priority];
+remove_priority(struct pcb_s *zombie) {
+	struct pcb_s **first = &(priority_array[NB_PRIORITY - 1 - zombie->priority]);
+
 	// Removing the zombie process from the priority array
 	// If alone, we set the cell to NULL
 	if (zombie->next == zombie) {
@@ -88,29 +86,22 @@ remove_priority(struct pcb_s *zombie)
 }
 
 static void
-free_process(struct pcb_s *zombie)
-{
+free_process(struct pcb_s *zombie) {
 	// Deallocating
 	phyAlloc_free(zombie->stack, zombie->stack_size_words);
 	phyAlloc_free(zombie, sizeof(zombie));
 }
 
 static struct pcb_s *
-highest_priority(unsigned int i)
-{
-	//Parcours dans la liste de priorité. Dès que l'on a trouvé une case non vide, on élit un process
-	//parmi la liste chainée.
-	//TODO : Question d'utiliser current_process si pas null ?
+highest_priority() {
 	struct pcb_s *process_prio = NULL;
-	while(process_prio == NULL){
-		if(priority_array[i] != NULL){
-			process_prio = priority_array[i];
-		}
-		else {
-			i++;
-		}
+	// Finding the first process in the priority array (most prioritary)
+	for (int i = 0; process_prio == NULL; ++i) {
+		process_prio = priority_array[i];
 	}
-	return process_prio;
+
+	// If we did not find any process in the array, we return idle_ps
+	return NULL == process_prio ? idle_ps : process_prio;
 }
 
 /**
@@ -118,8 +109,7 @@ highest_priority(unsigned int i)
  * If there is no next process alive (all STATE_ZOMBIE), it returns NULL
  */
 static struct pcb_s *
-next_alive(struct pcb_s *first_pcb)
-{
+next_alive(struct pcb_s *first_pcb) {
 	struct pcb_s *iterator_ps = first_pcb->next;
 	if (STATE_ZOMBIE == iterator_ps->state) {
 		while (STATE_ZOMBIE == iterator_ps->state && iterator_ps != first_pcb) {
@@ -148,13 +138,12 @@ next_alive(struct pcb_s *first_pcb)
 }
 
 static void
-elect()
-{
+elect() {
 	if (STATE_ZOMBIE != current_ps->state) current_ps->state = STATE_PAUSED;
 	struct pcb_s *previous_ps = current_ps;
 
 	do {
-		current_ps = highest_priority(0);
+		current_ps = highest_priority();
 		current_ps = next_alive(current_ps->previous);
 	} while (current_ps == NULL);
 
@@ -170,7 +159,7 @@ elect()
 
 //------------------------------------------------------------------------
 
-struct pcb_s *
+void
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority)
 {
 	DISABLE_IRQ();
@@ -194,15 +183,12 @@ create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int
 	}
 
 	ENABLE_IRQ();
-
-	return new_ps;
 }
 
 void
-__attribute__((naked)) ctx_switch()
-{
-	__asm("sub lr, lr, #4");
+__attribute__((naked)) ctx_switch() {
 	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
 	// Saving current context
 	__asm("push {r0-r12, lr}");
@@ -221,8 +207,7 @@ __attribute__((naked)) ctx_switch()
 }
 
 void
-ctx_switch_from_irq()
-{
+ctx_switch_from_irq() {
 	DISABLE_IRQ();
 
 	__asm("sub lr, lr, #4");
@@ -248,20 +233,30 @@ ctx_switch_from_irq()
 	__asm("rfeia sp!");
 }
 
-void
-start_sched(unsigned int stack_size_words)
-{
-	init_ps = create_process(NULL, NULL, stack_size_words, 0);
-
-	current_ps = init_ps;
-
-	set_tick_and_enable_timer();
-	ENABLE_IRQ();
+static void
+nothing() {
+	// If idle becomes a zombie; check next_alive (does not support it yet)
+	for (;;) {
+		ctx_switch();
+	}
 }
 
 void
-end_sched()
-{
-	free_process(init_ps);
+start_sched(unsigned int stack_size_words) {
+	// Creating the process, without inserting it in the priority array
+	// (priority is not used)
+	idle_ps = init_pcb(NULL, NULL, stack_size_words, 0);
+	idle_ps->pid = 0;
+	idle_ps->previous = idle_ps;
+	idle_ps->next = idle_ps;
+
+	current_ps = idle_ps;
+
+	nothing();
+}
+
+void
+end_sched() {
+	free_process(idle_ps);
 }
 
