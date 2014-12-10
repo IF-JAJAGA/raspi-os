@@ -109,7 +109,6 @@ elect()
 	else if (STATE_PAUSED == current_ps->state){
 		current_ps->qtCount--;
 		if (current_ps->qtCount){
-			current_ps = current_ps->next;
 			elect();
 		}
 	}
@@ -170,14 +169,14 @@ __attribute__((naked)) ctx_switch_from_irq()
 {
 	DISABLE_IRQ();
 
+	__asm("sub lr, lr, #4");
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
+
 	// Saving current context
 	__asm("push {r0-r12, lr}");
 	__asm("mov %0, lr" : "= r" (current_ps->instruction));
 	__asm("mov %0, sp" : "= r" (current_ps->stack));
-
-	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
 
 	// Electing the next current_ps
 	elect();
