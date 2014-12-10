@@ -28,6 +28,9 @@ start_current_process()
 	current_ps->entry_point(current_ps->args);
 
 	current_ps->state = STATE_ZOMBIE;
+	
+	// Switch to next process
+	ctx_switch_from_irq();
 }
 
 static struct pcb_s *
@@ -67,27 +70,26 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 static void
 remove_priority(struct pcb_s *zombie)
 {
-	//On s'enlève de la liste des priorités.
-	//Si on est le seul avec notre priorité, on met la case à NULL.
-	if(zombie -> next == zombie){
-		priority_array[NB_PRIORITY - 1 - zombie->priority] = NULL;
+	struct pbc_s **first = &priority_array[NB_PRIORITY - 1 - zombie->priority];
+	// Removing the zombie process from the priority array
+	// If alone, we set the cell to NULL
+	if (zombie->next == zombie) {
+		*first = NULL;
 	}
-	else{
-		struct pcb_s *pcb_same_prio = priority_array[NB_PRIORITY - 1 - zombie->priority];
-		while(pcb_same_prio -> next != zombie){
-			pcb_same_prio = pcb_same_prio -> next;
+	else {
+		// We delete the zombie from the list
+		zombie->previous->next = zombie->next;
+		zombie->next->previous = zombie->previous;
+
+		if (zombie == *first) {
+			*first = zombie->next; 
 		}
-		//On se situe juste avant le processus à supprimer.
-		pcb_same_prio -> next = zombie -> next;
 	}
 }
 
 static void
 free_process(struct pcb_s *zombie)
 {
-	// Removes the process from the priority array
-	remove_priority(zombie);
-
 	// Deallocating
 	phyAlloc_free(zombie->stack, zombie->stack_size_words);
 	phyAlloc_free(zombie, sizeof(zombie));
@@ -121,10 +123,9 @@ next_alive(struct pcb_s *first_pcb)
 	struct pcb_s *iterator_ps = first_pcb->next;
 	if (STATE_ZOMBIE == iterator_ps->state) {
 		while (STATE_ZOMBIE == iterator_ps->state && iterator_ps != first_pcb) {
-			// Deleting current_ps from the list
-			current_ps->previous->next = current_ps->next;
-			current_ps->next->previous = current_ps->previous;
-
+			// Deleting iterator_ps from the list
+			remove_priority(iterator_ps);
+			
 			struct pcb_s *next = iterator_ps->next;
 
 			// Deallocating the memory of the ZOMBIE
@@ -134,7 +135,10 @@ next_alive(struct pcb_s *first_pcb)
 			iterator_ps = next;
 		}
 
-		if (STATE_ZOMBIE == iterator_ps->state) {
+		if (STATE_ZOMBIE == first_pcb->state) {
+			remove_priority(first_pcb);
+			free_process(first_pcb);
+
 			// There are no process that wants to execute anything
 			// TOO MANY ZOMBIES!!
 			return NULL;
@@ -146,7 +150,7 @@ next_alive(struct pcb_s *first_pcb)
 static void
 elect()
 {
-	current_ps->state = STATE_PAUSED;
+	if (STATE_ZOMBIE != current_ps->state) current_ps->state = STATE_PAUSED;
 	struct pcb_s *previous_ps = current_ps;
 
 	do {
