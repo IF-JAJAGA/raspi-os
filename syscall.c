@@ -57,6 +57,6 @@ void __attribute__ ((naked)) doSysCallWait(){
 	//Sauvegarde du nbre de quantums à attendre pour le process
 	current_ps->qtCount = nbQuantums;
 	
-	ctx_switch_from_irq();
+	ctx_switch();
 	
 }
