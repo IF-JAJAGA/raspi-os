@@ -6,7 +6,7 @@
 
 typedef void (*func_t) (void *);
 
-enum state_e {STATE_NEW, STATE_EXECUTING, STATE_PAUSED, STATE_ZOMBIE};
+enum state_e {STATE_NEW, STATE_EXECUTING, STATE_WAITING, STATE_PAUSED, STATE_ZOMBIE};
 
 struct pcb_s {
 	// Stored in a circular doubly linked list
@@ -29,14 +29,20 @@ struct pcb_s {
 
 	// Priority assigned to the process 0 is lowest, NB_PRIORITY - 1 highest
 	unsigned int priority;
+	
+	// Quantum counter before waking when ps is STATE_PAUSED
+	unsigned int qt_count;
 };
 
 // GLOBAL
 const unsigned int WORD_SIZE;
 const unsigned int NUMBER_REGISTERS;
 
-struct pcb_s *
+void
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
+
+void
+set_current_paused(unsigned int qt_count);
 
 void
 ctx_switch();

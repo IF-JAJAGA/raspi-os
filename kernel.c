@@ -5,36 +5,37 @@
 
 // Stack size in words (divide by WORD_SIZE if necessary)
 const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
-
-struct done_s {
-	int max;
-	int curr;
-};
+const unsigned int TOTAL_NB_PS = 5;
 
 void
 funcA(void *a)
 {
-	struct done_s *d = (struct done_s *) a;
 	long cptA = 1;
 
-	while (cptA > 0) {
-		cptA += 32;
+	while (cptA < 10) {
+		cptA += 2;
 	}
 	cptA = 0;
-	d->curr++;
 }
 
 void
 funcB(void *a)
 {
-	struct done_s *d = (struct done_s *) a;
 	int cptB = 1;
 
-	while (cptB < 2147483647) {
+	while (cptB < 20) {
 		cptB += 2;
 	}
-	d->curr++;
 }
+
+void
+funcC(void *a)
+{
+	// We create two more processes
+	create_process(funcA, a, STACK_SIZE_WORDS, 15);
+	create_process(funcA, a, STACK_SIZE_WORDS, 4);
+}
+
 
 //------------------------------------------------------------------------
 
@@ -44,19 +45,12 @@ kmain ( void )
 	// Initialize hardware
 	init_hw();
 
-	struct done_s done;
-	done.max = 2;
-	done.curr = 0;
-
 	// Initialize all ctx
-	create_process(funcA, &done, STACK_SIZE_WORDS, 1);
-	create_process(funcB, &done, STACK_SIZE_WORDS, 2);
+	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
+	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
+	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
 
 	start_sched(STACK_SIZE_WORDS);
-
-	while (done.curr < done.max) {}
-
-	char a[] = "Youpi!!";
 
 	return 0;
 }

@@ -20,3 +20,8 @@ void SWIHandler();
   * Fonction qui reboot le système
   */
 void doSysCallReboot();
+
+/**
+ * Fonction qui fait attendre le processus de nbQuantum
+ */
+void doSysCallWait();
