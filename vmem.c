@@ -1,22 +1,41 @@
-#include <stdint.h>
-
-#include "hw.h"
 #include "vmem.h"
 
-unsigned int init_kern_translation_table (void) {
-	unsigned int log_adress;
-	unsigned int * ptr_adress_first_TT;	//endroit où on se trouve dans la table de page de niveau 1
+uint32_t device_flags =
+	1    << 0  | //bit de code exécutable
+	1    << 1  | //bit à 1 par défaut
+	0b01 << 2  | //2 bits correspondants à C & B
+	0b00 << 4  | //2 bits correspondants à AP
+	000  << 6  | //3 bits correspondants à TEX
+	0    << 9  | //bit correspondant à APX
+	0    << 10 | //bit correspondant à S (share)
+	0    << 11 ; //bit correspondant à nG (not general)
 
-	// /!\ A VERIFIER /!\
-	for (ptr_adress_first_TT = MMUTABLEBASE; ptr_adress_first_TT < (MMUTABLEBASE + FIRST_LVL_TT_SIZE); ptr_adress_first_TT++) {
+uint32_t normal_flags =
+	1     << 0  | //Xn
+	1     << 1  | //default
+	0b00  << 2  | //C & B
+	0b11  << 4  | //AP
+	0b001 << 6  | //TEX
+	0     << 9  | //APX
+	1     << 10 | //S
+	0     << 11 ; //nG
+
+
+unsigned int init_kern_translation_table (void) {
+	unsigned int * ptr_adress_first_TT = MMUTABLEBASE;	//endroit où on se trouve dans la table de page de niveau 1
+
+	for (int i = 0; ptr_adress_first_TT < (MMUTABLEBASE + FIRST_LVL_TT_SIZE); i++) {
 		ptr_adress_first_TT =
-			0b01       << 0 | //bits pour Coarse page table base address
-			0          << 2 | //bit pour SBZ
-			1          << 3 | //bit pour NS
-			0          << 4 | //bit pour SBZ (2)
-			0b0000     << 5 | //bits pour Domain
-			0          << 9 | //bit pour P (pas supporté par processeur
-			log_adress << 10; //adresse pour retrouver page dans TP LLV 2
+			0b01       				<< 0 | //bits pour Coarse page table base address
+			0          				<< 2 | //bit pour SBZ
+			1          				<< 3 | //bit pour NS
+			0          				<< 4 | //bit pour SBZ (2)
+			0b0000     				<< 5 | //bits pour Domain
+			0          				<< 9 | //bit pour P (pas supporté par processeur
+			(MMUTABLEBASE + i*FIRST_LVL_TT_COUN)	<< 10; //adresse pour retrouver page dans TP LLV 2
+			//BUFFER OVERFLOW : Seulement 22 bits disponibles et besoin de 24 bits
+		ptr_adress_first_TT++;
+	}
 
 	/*
  	* On veut remplir la table des pages en fonction des adresse logiques reçues.
@@ -27,23 +46,26 @@ unsigned int init_kern_translation_table (void) {
  	* 	On fait la même chose pour les log_adress comprises entre 0x20000000 et 0x20FFFFFF
  	* 	Pour les autres adresses, on remplie avec des adresses fausses (voir sujet)
  	*/
-	for (ptr_adress_first_TT = MMUTABLEBASE; ptr_adress_first_TT < (MMUTABLEBASE + FIRST_LVL_TT_SIZE); ptr_adress_first_TT++) {
+	ptr_adress_first_TT = MMUTABLEBASE;
+	for (int i = 0; ptr_adress_first_TT < (MMUTABLEBASE + FIRST_LVL_TT_SIZE); i++) {
 		unsigned int * ptr_adress_second_TT;
-		unsigned int * ptr_adress_second_init = (*ptr_adress_first_TT)>>10;
-		for (ptr_adress_second_TT = ptr_adress_second_init; ptr_adress_second_TT < (ptr_adress_second_init + SECOND_LVL_TT_SIZE); ptr_adress_second_TT++) {
-			if(log_adress > 0x0 && log_adress < 0x500000) {
+		unsigned int * ptr_adress_second_init = (unsigned int*) (*ptr_adress_first_TT >> 10);
+		for (int j = 0; ptr_adress_second_TT < (ptr_adress_second_init + SECOND_LVL_TT_SIZE); j++) {
+			if(i<6) {
 				*ptr_adress_second_TT = 
-					normal_flags << 0  |
-					log_adress   << 12 ;
-			} else if (log_adress > 0x20000000 && log_adress < 0x20FFFFFF) {
+					normal_flags 					<< 0  |
+					(i*SECOND_LVL_TT_COUN + j*FIRST_LVL_TT_COUN) 	<< 12 ;
+			} else if (i > 19 && i < 30) {
 				*ptr_adress_second_TT =
-					device_flags << 0  |
-					log_adress   << 12 ;
+					device_flags 					<< 0  |
+					(i*SECOND_LVL_TT_COUN + j*FIRST_LVL_TT_COUN)  	<< 12 ;
 			} else {
 				*ptr_adress_second_TT = 
 					0b00 << 0; //adresse de défaut
 			}
+			ptr_adress_second_TT++;
 		}
+		ptr_adress_first_TT++;
 	}
 	return 0;	
 }
