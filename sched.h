@@ -42,7 +42,7 @@ void
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
 
 void
-set_current_paused(unsigned int qt_count);
+set_current_paused(unsigned int qt_count, func_t instr);
 
 void
 ctx_switch();

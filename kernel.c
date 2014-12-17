@@ -2,6 +2,7 @@
 
 #include "hw.h"
 #include "sched.h"
+#include "syscall.h"
 
 // Stack size in words (divide by WORD_SIZE if necessary)
 const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
@@ -36,6 +37,21 @@ funcC(void *a)
 	create_process(funcA, a, STACK_SIZE_WORDS, 4);
 }
 
+void
+funcWait(void *a)
+{
+	int b;
+	// Call wait
+	sys_wait(2);
+	b = 42;
+}
+
+void
+funcReboot(void *a)
+{
+	sys_reboot();
+}
+
 
 //------------------------------------------------------------------------
 
@@ -49,6 +65,8 @@ kmain ( void )
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
 	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
+	//create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
+	create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
 	start_sched(STACK_SIZE_WORDS);
 

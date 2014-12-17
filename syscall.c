@@ -52,15 +52,14 @@ void __attribute__ ((naked)) doSysCallReboot(){
 
 void __attribute__ ((naked)) doSysCallWait(){
 	unsigned int nbQuantums = 0;
+	func_t instruction = NULL; 
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
 	//Récupère l'instruction à exécuter
-	__asm("mov %0, r2" : "= r" (current_ps->instruction));
-	//Mise en pause du current process
-	current_ps->state = STATE_PAUSED;
-	//Sauvegarde du nbre de quantums à attendre pour le process
-	current_ps->qtCount = nbQuantums;
+	__asm("mov %0, r2" : "= r" (instruction));
 	
-	ctx_switch_from_handler();
+	set_current_paused(nbQuantums,instruction);
+	
+	ctx_switch();
 	
 }

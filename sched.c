@@ -194,9 +194,10 @@ create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int
 
 // Sets the `current_ps` to STATE_PAUSED (but does not switch)
 void
-set_current_paused(unsigned int qt_count) {
+set_current_paused(unsigned int qt_count, func_t instr) {
 	current_ps->state = STATE_PAUSED;
 	current_ps->qt_count = qt_count;
+	current_ps->instruction = instr;
 }
 
 void
@@ -233,7 +234,8 @@ __attribute__((naked)) ctx_switch() {
 	__asm("cps #0x13");
 
 	// Saving current context
-	__asm("push {r0-r12}");
+	__asm("push {r0-r12,lr}");
+	__asm("mov %0, lr" : "= r" (current_ps->instruction));
 	__asm("mov %0, sp" : "= r" (current_ps->stack));
 
 	// Electing the next current_ps
@@ -242,7 +244,7 @@ __attribute__((naked)) ctx_switch() {
 	// Restoring context
 	__asm("mov sp, %0" : : "r" (current_ps->stack));
 	__asm("mov lr, %0" : : "r" (current_ps->instruction));
-	__asm("pop {r0-r12}");
+	__asm("pop {r0-r12,lr}");
 
 	__asm("rfeia sp!");
 }
