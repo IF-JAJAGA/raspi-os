@@ -31,3 +31,6 @@
 # Project specific
 *.list
 *.img
+
+# Hidden files
+.*

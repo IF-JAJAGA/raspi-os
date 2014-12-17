@@ -51,7 +51,7 @@ void __attribute__ ((naked)) doSysCallReboot(){
 }
 
 void __attribute__ ((naked)) doSysCallWait(){
-	unsigned int nbQuantums=0;
+	unsigned int nbQuantums = 0;
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
 	//Récupère l'instruction à exécuter
