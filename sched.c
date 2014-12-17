@@ -278,7 +278,7 @@ start_sched(unsigned int stack_size_words) {
 
 	current_ps = idle_ps;
 
-	infinite_switching();
+	infinite_switching(NULL);
 }
 
 // Forcing the idle process to stop

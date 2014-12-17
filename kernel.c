@@ -36,14 +36,6 @@ funcC(void *a)
 	create_process(funcA, a, STACK_SIZE_WORDS, 4);
 }
 
-void
-funcC(void *a)
-{
-	// We create two more processes
-	create_process(funcA, a, STACK_SIZE_WORDS, 15);
-	create_process(funcA, a, STACK_SIZE_WORDS, 4);
-}
-
 
 //------------------------------------------------------------------------
 
