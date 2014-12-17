@@ -3,6 +3,7 @@
 #include "hw.h"
 #include "sched.h"
 #include "syscall.h"
+#include "fb.h"
 
 // Stack size in words (divide by WORD_SIZE if necessary)
 const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
@@ -17,6 +18,7 @@ funcA(void *a)
 		cptA += 2;
 	}
 	cptA = 0;
+	drawRed();
 }
 
 void
@@ -27,14 +29,16 @@ funcB(void *a)
 	while (cptB < 20) {
 		cptB += 2;
 	}
+	drawBlue();
 }
 
 void
 funcC(void *a)
 {
 	// We create two more processes
-	create_process(funcA, a, STACK_SIZE_WORDS, 15);
-	create_process(funcA, a, STACK_SIZE_WORDS, 4);
+	//create_process(funcA, a, STACK_SIZE_WORDS, 15);
+	//create_process(funcA, a, STACK_SIZE_WORDS, 4);
+	drawYellow();
 }
 
 void
