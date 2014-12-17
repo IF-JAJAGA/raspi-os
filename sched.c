@@ -146,7 +146,7 @@ next_alive(struct pcb_s *first_pcb) {
 // Changes the global `current_ps` variable to the next (according to BPF policy)
 static void
 elect() {
-	if (STATE_ZOMBIE != current_ps->state) current_ps->state = STATE_PAUSED;
+	if (STATE_ZOMBIE != current_ps->state) current_ps->state = STATE_WAITING;
 	struct pcb_s *previous_ps = current_ps;
 
 	do {
@@ -271,14 +271,14 @@ void
 start_sched(unsigned int stack_size_words) {
 	// Creating the process, without inserting it in the priority array
 	// (priority is not used)
-	idle_ps = init_pcb(NULL, NULL, stack_size_words, 0);
+	idle_ps = init_pcb(infinite_switching, NULL, stack_size_words, 0);
 	idle_ps->pid = 0;
 	idle_ps->previous = idle_ps;
 	idle_ps->next = idle_ps;
 
 	current_ps = idle_ps;
 
-	infinite_switching(NULL);
+	ctx_switch();
 }
 
 // Forcing the idle process to stop
