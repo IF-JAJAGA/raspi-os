@@ -205,10 +205,9 @@ set_current_paused(unsigned int qt_count) {
  * When this does happen, the code starts again AFTER the calling of `ctx_switch()`.
  */
 void
-__attribute__((naked)) ctx_switch()
-{
-	__asm("sub lr, lr, #4");
+__attribute__((naked)) ctx_switch() {
 	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
 	// Saving current context
 	__asm("push {r0-r12, lr}");
@@ -272,14 +271,14 @@ void
 start_sched(unsigned int stack_size_words) {
 	// Creating the process, without inserting it in the priority array
 	// (priority is not used)
-	idle_ps = init_pcb(infinite_switching, NULL, stack_size_words, 0);
+	idle_ps = init_pcb(NULL, NULL, stack_size_words, 0);
 	idle_ps->pid = 0;
 	idle_ps->previous = idle_ps;
 	idle_ps->next = idle_ps;
 
 	current_ps = idle_ps;
 
-	ctx_switch();
+	infinite_switching();
 }
 
 // Forcing the idle process to stop
