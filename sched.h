@@ -8,8 +8,6 @@ typedef void (*func_t) (void *);
 
 enum state_e {STATE_NEW, STATE_EXECUTING, STATE_WAITING, STATE_PAUSED, STATE_ZOMBIE};
 
-extern struct pcb_s *current_ps;
-
 struct pcb_s {
 	// Stored in a circular doubly linked list
 	struct pcb_s *previous;
@@ -28,9 +26,12 @@ struct pcb_s {
 	// Pointer to the current instruction (lr register)
 	func_t        instruction;
 	void         *args;
+
+	// Priority assigned to the process 0 is lowest, NB_PRIORITY - 1 highest
+	unsigned int priority;
 	
-	//compteur de quantum avant réveil si process en PAUSE
-	unsigned int qtCount;
+	// Quantum counter before waking when ps is STATE_PAUSED
+	unsigned int qt_count;
 };
 
 // GLOBAL
@@ -38,7 +39,10 @@ const unsigned int WORD_SIZE;
 const unsigned int NUMBER_REGISTERS;
 
 void
-create_process(func_t f, void *args, unsigned int stack_size_words);
+create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
+
+void
+set_current_paused(unsigned int qt_count);
 
 void
 ctx_switch();

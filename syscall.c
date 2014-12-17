@@ -49,14 +49,12 @@ void __attribute__ ((naked)) doSysCallReboot(){
 }
 
 void __attribute__ ((naked)) doSysCallWait(){
-	unsigned int nbQuantums=0;
+	unsigned int nbQuantums = 0;
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
-	//Mise en pause du current process
-	current_ps->state = STATE_PAUSED;
-	//Sauvegarde du nbre de quantums à attendre pour le process
-	current_ps->qtCount = nbQuantums;
-	
+	// Setting the current process to paused for nbQuantums
+	set_current_paused(nbQuantums);
+
 	ctx_switch_from_irq();
 	
 }

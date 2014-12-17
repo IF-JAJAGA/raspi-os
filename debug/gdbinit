@@ -1,0 +1,8 @@
+layout split
+fs cmd
+wh cmd 12
+target remote:1234
+b kmain
+b kernel.c:12
+b ctx_switch_from_irq
+source include.gdb
