@@ -26,6 +26,7 @@ start_current_process()
 	current_ps->entry_point(current_ps->args);
 
 	current_ps->state = STATE_ZOMBIE;
+	ctx_switch_from_irq();
 }
 
 static struct pcb_s *
@@ -143,14 +144,13 @@ create_process(func_t f, void *args, unsigned int stack_size_words)
 }
 
 void
-__attribute__((naked)) ctx_switch()
+__attribute__((naked)) ctx_switch_from_handler()
 {
 	__asm("sub lr, lr, #4");
 	__asm("srsdb sp!, #0x13");
 
 	// Saving current context
-	__asm("push {r0-r12, lr}");
-	__asm("mov %0, lr" : "= r" (current_ps->instruction));
+	__asm("push {r0-r12}");
 	__asm("mov %0, sp" : "= r" (current_ps->stack));
 
 	// Electing the next current_ps
@@ -159,7 +159,7 @@ __attribute__((naked)) ctx_switch()
 	// Restoring context
 	__asm("mov sp, %0" : : "r" (current_ps->stack));
 	__asm("mov lr, %0" : : "r" (current_ps->instruction));
-	__asm("pop {r0-r12, lr}");
+	__asm("pop {r0-r12}");
 
 	__asm("rfeia sp!");
 }

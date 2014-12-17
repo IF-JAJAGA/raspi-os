@@ -44,6 +44,9 @@ void
 ctx_switch();
 
 void
+ctx_switch_from_handler();
+
+void
 ctx_switch_from_irq();
 
 void

@@ -16,6 +16,8 @@ void sys_reboot(){
 void sys_wait(unsigned int nbQuantums){
 	DISABLE_IRQ();
 	
+	//Ecrit l'adresse de retour dans r2
+	__asm("mov r2, lr");
 	//Ecrit dans r1 nbQuantums
 	__asm("mov r1, %0" : : "r"(nbQuantums) : "r1");
 	//Ecrit dans r0 le numéro de l'appel système sys_wait, i.e. 2
@@ -52,11 +54,13 @@ void __attribute__ ((naked)) doSysCallWait(){
 	unsigned int nbQuantums=0;
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
+	//Récupère l'instruction à exécuter
+	__asm("mov %0, r2" : "= r" (current_ps->instruction));
 	//Mise en pause du current process
 	current_ps->state = STATE_PAUSED;
 	//Sauvegarde du nbre de quantums à attendre pour le process
 	current_ps->qtCount = nbQuantums;
 	
-	ctx_switch();
+	ctx_switch_from_handler();
 	
 }
