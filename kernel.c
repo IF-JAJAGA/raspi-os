@@ -4,9 +4,8 @@
 #include "sched.h"
 #include "syscall.h"
 #include "fb.h"
+#include "vmem.h"
 
-// Stack size in words (divide by WORD_SIZE if necessary)
-const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
 const unsigned int TOTAL_NB_PS = 5;
 
 void
@@ -36,8 +35,8 @@ void
 funcC(void *a)
 {
 	// We create two more processes
-	//create_process(funcA, a, STACK_SIZE_WORDS, 15);
-	//create_process(funcA, a, STACK_SIZE_WORDS, 4);
+	create_process(funcA, a, STACK_SIZE_WORDS, 15);
+	create_process(funcA, a, STACK_SIZE_WORDS, 4);
 	drawYellow();
 }
 
@@ -56,7 +55,6 @@ funcReboot(void *a)
 	sys_reboot();
 }
 
-
 //------------------------------------------------------------------------
 
 int
@@ -64,15 +62,22 @@ kmain ( void )
 {
 	// Initialize hardware
 	init_hw();
+	init_kern_translation_table();
+
+	for (unsigned int i = 0; i < 0x48000; ++i) {
+		if (i != translate(i)) {
+			unsigned int PROBLEM = 9; // DEBUG USE ONLY
+		}
+	}
 
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
 	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
-	//create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
-	create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
+	// create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
+	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
-	start_sched(STACK_SIZE_WORDS);
+	start_sched(STACK_SIZE_WORDS, nothing, NULL);
 
 	return 0;
 }

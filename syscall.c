@@ -1,6 +1,7 @@
 #include "hw.h"
 #include "syscall.h"
 #include "sched.h"
+#include "constants.h"
 
 void PUT32 ( unsigned int, unsigned int );
 
