@@ -11,11 +11,11 @@ const unsigned int STACK_SIZE_WORDS = 16384; // 4kB, stack size in words (divide
 // ==============
 
 // Constants
-const unsigned int PAGE_SIZE_OCT     =   0x1000; // 4096 (bytes/octets)
-const unsigned int TT1_SIZE_WRD      =   0x1000; // Number of cells of the TT1 (index is 12 bits long)
-const unsigned int TT2_SIZE_WRD      =    0x100; // Number of cells of the TT2 (index is 8 bits long)
-const unsigned int NB_ACCESSIBLE_ADD =   0x1000; // Number of accessible addresses with an offset (12 bits long)
-const unsigned int SECTION_SIZE      = 0x100000; // 1MB (Mega byte/octet)
+const unsigned int PAGE_SIZE_OCT    =   0x1000; // 4096 (bytes/octets)
+const unsigned int TT1_SIZE_WRD     =   0x1000; // Number of cells of the TT1 (index is 12 bits long)
+const unsigned int TT2_SIZE_WRD     =    0x100; // Number of cells of the TT2 (index is 8 bits long)
+const unsigned int PAGE_INDEX_RANGE =   0x1000; // Number of accessible addresses with an offset (12 bits long)
+const unsigned int SECTION_SIZE     = 0x100000; // 1MB (Mega byte/octet)
 
 // Constant address
 const unsigned int TT1_BASE = 0x48000; // Adress of the level 1 Translation Table

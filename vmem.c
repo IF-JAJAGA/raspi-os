@@ -2,14 +2,14 @@
 #include "constants.h"
 
 uint32_t device_flags =
-	1    << 0  | //bit de code exécutable
-	1    << 1  | //bit à 1 par défaut
-	0b01 << 2  | //2 bits correspondants à C & B
-	0b00 << 4  | //2 bits correspondants à AP
-	000  << 6  | //3 bits correspondants à TEX
-	0    << 9  | //bit correspondant à APX
-	0    << 10 | //bit correspondant à S (share)
-	0    << 11 ; //bit correspondant à nG (not general)
+	1    << 0  | // Executable bit code
+	1    << 1  | // Bit defaulting to 1
+	0b01 << 2  | // 2 bits corresponding to C & B
+	0b00 << 4  | // 2 bits corresponding to AP
+	000  << 6  | // 3 bits correspondants à TEX
+	0    << 9  | // Bit corresponding to APX
+	0    << 10 | // Bit corresponding to S (share)
+	0    << 11 ; // Bit corresponding to nG (not general)
 
 uint32_t normal_flags =
 	1     << 0  | //Xn
@@ -22,32 +22,31 @@ uint32_t normal_flags =
 	0     << 11 ; //nG
 
 
-unsigned int init_kern_translation_table (void) {
-	// Points to an element of the level 1 TT
-	
-
-	/*
- 	 *On veut remplir la table des pages en fonction des adresse logiques reçues.
- 	 *Chaque table de page de niveau 1 renvoie à une table de page de niveau 2 contenant 256 entrées renvoyant à des pages de 4096 bits.
- 	 *  On a donc une page de niveau 1 qui concerne : 2⁸ * 2¹² = 2²⁰ adresses (256*4096), ce qui correspond à 2²⁰ = 0x100000
- 	 *  Comme on veut traduire que phy_adress = log_adress de 0x0 à 0x500000, cela concerne donc les 5 premières table de page de niveau 1
- 	 *    Les tables de page de niveau 2 de ces tables de page de niveau 1 pointeront sur des adresses physiques égales aux adresses logiques
- 	 *  On fait la même chose pour les log_adress comprises entre 0x20000000 et 0x20FFFFFF
- 	 *  Pour les autres adresses, on remplie avec des adresses fausses (voir sujet)
- 	 */
-	for (unsigned int *tt_level_1 = (unsigned int *)TT1_BASE, *max_1 = tt_level_1 + TT1_SIZE_WRD, i = 0;
-			i < 5;// tt_level_1 < max_1;
+unsigned int
+init_kern_translation_table (void) {
+	/**
+	 * Filling the Translating Tables (TT) of level 1 and 2.
+	 * Each level 1 cell redirects to a TT of level 2, itself containing 256 cells redirecting to pages of 4096 Bytes/octets
+	 *    There is ONE level 1 TT which contains 2¹² cells, each concerning 2⁸ * 2¹² == 2²⁰ == 0x100000 physical addresses
+	 *    As we want the virtual_addr == physical_addr for all virtual addresses from 0x0 to 0x500000, this concerns the 5 first cells of TT1
+	 *      The level 2 TT will point to physical addresses equal to the virtual addresses given
+	 *    We do the same for the virtual addresses between 0x20000000 and 0x20FFFFFF
+	 *   For the other addresses, we fill the TT with WRONG addresses for now (see subject)
+	 */
+	for (unsigned int *tt_level_1 = (unsigned int *)TT1_BASE, i = 0;
+			i < 5;
+	//		i < TT1_SIZE_WRD;
 			++i, ++tt_level_1) {
 
 		*tt_level_1 =
-			0b01                              << 0 | //bits pour Coarse page table base address
-			0                                 << 2 | //bit pour SBZ
-			1                                 << 3 | //bit pour NS
-			0                                 << 4 | //bit pour SBZ (2)
-			0b0000                            << 5 | //bits pour Domain
-			0                                 << 9 | //bit pour P (pas supporté par processeur
-			(TT1_BASE + (i+1) * TT1_SIZE_WRD) << 10; //adresse pour retrouver page dans TP LLV 2
-			//BUFFER OVERFLOW : Seulement 22 bits disponibles et besoin de 24 bits
+			0b01                              << 0 | // Bits for Coarse page table base address
+			0                                 << 2 | // Bit for SBZ
+			1                                 << 3 | // Bit for NS
+			0                                 << 4 | // Bit for SBZ (2)
+			0b0000                            << 5 | // Bits for Domain
+			0                                 << 9 | // Bit for P (not supported by this CPU)
+			(TT1_BASE + (i+1) * TT1_SIZE_WRD) << 10; // Address of the corresponding TT2
+			// BUFFER OVERFLOW: Only 22 bits available, and we need 24
 
 		unsigned int *tt2_base = (unsigned int *) (*tt_level_1 >> 10);
 		for (unsigned int *tt_level_2 = tt2_base, *max_2 = tt_level_2 + TT2_SIZE_WRD, j = 0;
@@ -57,18 +56,18 @@ unsigned int init_kern_translation_table (void) {
 			if (i < 5) {
 				*tt_level_2 = 
 					normal_flags                            |
-					(i*TT2_SIZE_WRD + j*TT1_SIZE_WRD) << 12 ;
+					(i*TT2_SIZE_OCT + j) << 10;
 			} else if (i > 19 && i < 30) {
 				*tt_level_2 =
 					device_flags                            |
-					(i*TT2_SIZE_WRD + j*TT1_SIZE_WRD) << 12 ;
+					(i*TT2_SIZE_WRD + j*PAGE_INDEX_RANGE) << 10;
 			} else {
-				*tt_level_2 = 0x0; //adresse de défaut
+				*tt_level_2 = 0x0; // Rejecting address (translation fault)
 			}
 		}
-		unsigned int unused = 0; // pour le debug
+		unsigned int unused = 0; // For debug
 	}
-	unsigned int unused = 0; // pour le debug
+	unsigned int unused = 0; // For debug
 
 	return 0;	
 }
@@ -108,44 +107,45 @@ void configure_mmu_C() {
 }
 
 unsigned int
-translate(unsigned int va)
-{
-  unsigned int pa; /* The result */
+translate(unsigned int va) {
+	unsigned int pa; /* The result */
 
-  /* 1st and 2nd table addresses */
-  unsigned int table_base;
-  unsigned int second_level_table;
+	/* 1st and 2nd table addresses */
+	unsigned int table_base;
+	unsigned int second_level_table;
 
-  /* Indexes */
-  unsigned int first_level_index;
-  unsigned int second_level_index;
-  unsigned int page_index;
-  
-  /* Descriptors */
-  unsigned int first_level_descriptor;
-  unsigned int* first_level_descriptor_address;
-  unsigned int second_level_descriptor;
-  unsigned int* second_level_descriptor_address;
+	/* Indexes */
+	unsigned int first_level_index;
+	unsigned int second_level_index;
+	unsigned int page_index;
 
-  table_base = TT1_BASE;
-  
-  /* Indexes*/
-  first_level_index = (va >> 20);
-  second_level_index = ((va << 12) >> 24);
-  page_index = (va & 0x00000FFF);
+	/* Descriptors */
+	unsigned int first_level_descriptor;
+	unsigned int* first_level_descriptor_address;
+	unsigned int second_level_descriptor;
+	unsigned int* second_level_descriptor_address;
 
-  /* First level descriptor */
-  first_level_descriptor_address = (unsigned int*) (table_base | (first_level_index << 2));
-  first_level_descriptor = *(first_level_descriptor_address);
+	__asm("mrc p15, 0, %[tb], c2, c0, 0" : [tb] "=r"(table_base));
 
-  /* Second level descriptor */
-  second_level_table = (first_level_descriptor >> 10);
-  second_level_descriptor_address = (unsigned int*) (second_level_table | (second_level_index << 2));
-  second_level_descriptor = *((unsigned int*) second_level_descriptor_address);    
+	table_base = table_base & 0xFFFFC000;
 
-  /* Physical address */
-  pa = (second_level_descriptor >> 12) | page_index;
+	/* Indexes*/
+	first_level_index = (va >> 20);
+	second_level_index = ((va << 12) >> 24);
+	page_index = (va & 0x00000FFF);
 
-  return pa;
+	/* First level descriptor */
+	first_level_descriptor_address = (unsigned int*) (table_base | (first_level_index << 2));
+	first_level_descriptor = *(first_level_descriptor_address);
+
+	/* Second level descriptor */
+	second_level_table = first_level_descriptor & 0xFFFFFC00;
+	second_level_descriptor_address = (unsigned int*) (second_level_table | (second_level_index << 2));
+	second_level_descriptor = *((unsigned int*) second_level_descriptor_address);    
+
+	/* Physical address */
+	pa = (second_level_descriptor & 0xFFFFF000) | page_index;
+
+	return pa;
 }
 

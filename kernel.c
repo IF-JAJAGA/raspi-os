@@ -57,6 +57,9 @@ funcReboot(void *a)
 
 //------------------------------------------------------------------------
 
+typedef enum bool_e {false, true} bool;
+
+bool debug_ok = true;
 int
 kmain ( void )
 {
@@ -64,11 +67,18 @@ kmain ( void )
 	init_hw();
 	init_kern_translation_table();
 
-	for (unsigned int i = 0; i < 0x48000; ++i) {
+	for (unsigned int i = 0; i < 0x500000; ++i) {
 		if (i != translate(i)) {
-			unsigned int PROBLEM = 9; // DEBUG USE ONLY
+			debug_ok = false;
 		}
 	}
+	for (unsigned int i = 0x500000; i < 0x20000000; ++i) {
+		if (i != translate(i)) {
+			debug_ok = false;
+		}
+	}
+
+	debug_ok = false;
 
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
