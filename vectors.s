@@ -45,6 +45,11 @@ reset:
     ;@ (PSR_SVC_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
     mov r0,#0xD3
     msr cpsr_c,r0
+    mov sp,#0x44000
+
+    ;@ (PSR_SYSTEM_MODE|PSR_FIQ_DIS|PSR_IRQ_DIS)
+    mov r0,#0xDF
+    msr cpsr_c,r0
     mov sp,#0x48000
 
     bl kmain

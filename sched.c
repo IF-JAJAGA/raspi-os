@@ -13,6 +13,9 @@ static struct pcb_s * priority_array[NB_PRIORITY] = {NULL};
 
 static const unsigned int CPSR_SVC_NO_IRQ = 0x53; // Supervisor mode (with no interrupts)
 static const unsigned int CPSR_SVC_IRQ = 0x13; // Supervisor mode (with interrupts)
+static const unsigned int CPSR_USER_IRQ = 0x10; // Supervisor mode (with interrupts)
+static const unsigned int CPSR_SYSTEM_IRQ = 0x1F; // Supervisor mode (with interrupts)
+
 
 // Initialized to NULL (when not allocated)
 static struct pcb_s *current_ps = NULL;
@@ -46,11 +49,11 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 	uint8_t *stack_base = (uint8_t *) phyAlloc_alloc(stack_size_words * WORD_SIZE);
 
 	// Positioning the pointer to the first (word) cell of the stack (highest address)
-	stack_base += stack_size_words * WORD_SIZE - WORD_SIZE;
 	pcb->stack = (uint32_t *) stack_base;
+	pcb->stack += stack_size_words - 1;
 
 	// Initializing the first cell of the stack to the supervisor execution mode
-	*pcb->stack = CPSR_SVC_IRQ; // with interrupts enabled
+	*pcb->stack = CPSR_USER_IRQ; // with interrupts enabled
 
 	// As the process is STATE_NEW, pushing the address of the code launching new processes
 	--(pcb->stack);
@@ -194,10 +197,10 @@ create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int
 
 // Sets the `current_ps` to STATE_PAUSED (but does not switch)
 void
-set_current_paused(unsigned int qt_count, func_t instr) {
+set_current_paused(unsigned int qt_count) {
 	current_ps->state = STATE_PAUSED;
 	current_ps->qt_count = qt_count;
-	current_ps->instruction = instr;
+	//current_ps->instruction = instr;
 }
 
 void
@@ -230,8 +233,8 @@ __attribute__((naked)) ctx_switch_from_handler()
  */
 void
 __attribute__((naked)) ctx_switch() {
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
+	__asm("srsdb sp!, #0x1F");
+	__asm("cps #0x1F");
 
 	// Saving current context
 	__asm("push {r0-r12,lr}");
@@ -259,8 +262,8 @@ ctx_switch_from_irq() {
 	DISABLE_IRQ();
 
 	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
+	__asm("srsdb sp!, #0x1F");
+	__asm("cps #0x1F");
 
 	// Saving current context
 	__asm("push {r0-r12, lr}");
@@ -301,7 +304,7 @@ start_sched(unsigned int stack_size_words) {
 	idle_ps->next = idle_ps;
 
 	current_ps = idle_ps;
-
+	
 	ctx_switch();
 }
 

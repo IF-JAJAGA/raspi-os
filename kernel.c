@@ -66,11 +66,11 @@ kmain ( void )
 	init_hw();
 
 	// Initialize all ctx
-	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
-	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
-	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
-	//create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
-	create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
+	//create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
+	//create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
+	//create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
+	create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
+	//create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
 	start_sched(STACK_SIZE_WORDS);
 

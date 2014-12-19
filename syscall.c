@@ -33,8 +33,9 @@ void __attribute__ ((naked)) SWIHandler(){
 	switch(numAppelSys){
 		case 1 : doSysCallReboot();
 					break;
-		case 2 : doSysCallWait();
-					break;
+		case 2 : 
+			doSysCallWait();
+			break;
 	}
 	ENABLE_IRQ();
 }
@@ -52,14 +53,18 @@ void __attribute__ ((naked)) doSysCallReboot(){
 
 void __attribute__ ((naked)) doSysCallWait(){
 	unsigned int nbQuantums = 0;
-	func_t instruction = NULL; 
+	//func_t instruction = NULL; 
 	//Récupérer le nombre de quantums à attendre
 	__asm("mov %0, r1" : "=r"(nbQuantums));
 	//Récupère l'instruction à exécuter
-	__asm("mov %0, r2" : "= r" (instruction));
+	//__asm("mov %0, r2" : "= r" (instruction));	
+	//Empilement de l'adresse de retour
 	
-	set_current_paused(nbQuantums,instruction);
+	__asm("push {r2,lr}");
+	set_current_paused(nbQuantums);
+	__asm("pop {r2,lr}");
 	
 	ctx_switch();
 	
+	__asm("bx r2");
 }
