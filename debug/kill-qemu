@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-pid=$(ps -e | grep qemu | awk {'print $1'})
-echo "$pid killed"
-kill -9 $pid 2>/dev/null

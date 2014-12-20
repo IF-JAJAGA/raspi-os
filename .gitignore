@@ -34,3 +34,6 @@
 
 # Hidden files
 .*
+
+# Debug files
+debug/*
