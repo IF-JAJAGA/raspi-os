@@ -1,0 +1,2 @@
+Page ranges are not calculated correctly: fixed
+Translation does not completely fault (set to 0) because of the page_offset

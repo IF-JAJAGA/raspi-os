@@ -73,7 +73,17 @@ kmain ( void )
 		}
 	}
 	for (unsigned int i = 0x500000; i < 0x20000000; ++i) {
+		if (0 != translate(i)) {
+			debug_ok = false;
+		}
+	}
+	for (unsigned int i = 0x20000000; i < 0x20FFFFFF; ++i) {
 		if (i != translate(i)) {
+			debug_ok = false;
+		}
+	}
+	for (unsigned int i = 0x20FFFFFF; i <= 0xFFFFFFFF; ++i) {
+		if (0 != translate(i)) {
 			debug_ok = false;
 		}
 	}

@@ -1,0 +1,24 @@
+Exam: 0x F    0    F    0    F    0    F    0
+Exam: 1111 0000 1111 0000 1111 0000 1111 0000
+
+Base: TT2_1ST_BASE
+Base: 0x                4    C    0    0    0
+Base:                 100 1100 0000 0000 0000
+
+Incr: TT2_SIZE_OCT
+Incr: 0x                          4    0    0
+Incr:                           100 0000 0000
+
+Max : TT2_1ST_BASE + (TT1_SIZE_WRD - 1)*TT2_SIZE_OCT
+Max : 0x           4    4    B    C    0    0
+Max :            100 0100 1011 1100 0000 0000
+
+Mask: Ignoring last 10 bits (used for flags)
+Mask: 0x F    F    F    F    F    C    0    0
+Mask: 1111 1111 1111 1111 1111 1100 0000 0000
+
+Kernel: sections from 0 to 4
+(@ from 0x0 to 0x4 FFFFF)
+
+Devices: sections from 0x200 to 0x20F
+(@ from 0x200 00000 to 0x20F FFFFF)

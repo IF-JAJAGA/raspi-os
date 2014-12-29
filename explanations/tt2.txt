@@ -1,0 +1,18 @@
+Exam: 0x F    0    F    0    F    0    F    0
+Exam: 1111 0000 1111 0000 1111 0000 1111 0000
+
+Base: 0 to (TT1_SIZE_WRD - 1)*TT2_SIZE_WRD*PAGE_INDEX_RANGE
+Base: 0x F    F    F    0    0    0    0    0
+Base: 1111 1111 1111 0000 0000 0000 0000 0000
+
+Incr: PAGE_INDEX_RANGE
+Incr: 0x                     1    0    0    0
+Incr:                        1 0000 0000 0000
+
+Max : base + (TT2_SIZE_WRD - 1)*PAGE_INDEX_RANGE
+Max : 0x F    F    F    F    F    0    0    0
+Max : 1111 1111 1111 1111 1111 0000 0000 0000
+
+Mask: Ignoring last 12 bits (used for flags)
+Mask: 0x F    F    F    F    F    0    0    0
+Mask: 1111 1111 1111 1111 1111 0000 0000 0000
