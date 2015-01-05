@@ -4,9 +4,10 @@
 #include "sched.h"
 #include "syscall.h"
 #include "fb.h"
+#include "constants.h"
 
 // Stack size in words (divide by WORD_SIZE if necessary)
-const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
+//const unsigned int STACK_SIZE_WORDS = 16384; // 4kB
 const unsigned int TOTAL_NB_PS = 5;
 
 void
@@ -72,7 +73,9 @@ kmain ( void )
 	//create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
 	//create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
-	start_sched(STACK_SIZE_WORDS);
+//	start_sched(STACK_SIZE_WORDS);
+	start_sched(STACK_SIZE_WORDS, nothing, NULL);
+
 
 	return 0;
 }

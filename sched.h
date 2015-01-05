@@ -34,12 +34,12 @@ struct pcb_s {
 	unsigned int qt_count;
 };
 
-// GLOBAL
-const unsigned int WORD_SIZE;
-const unsigned int NUMBER_REGISTERS;
-
 void
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
+/*
+void
+set_current_paused(unsigned int qt_count, func_t instr);
+*/
 
 void
 set_current_paused(unsigned int qt_count);
@@ -54,10 +54,13 @@ void
 ctx_switch_from_irq();
 
 void
-start_sched();
+infinite_switching(void *unused);
 
 void
-end_sched();
+nothing(void *unused);
+
+void
+start_sched(unsigned int stack_size_words, func_t idle_handler, void *args);
 
 #endif
 

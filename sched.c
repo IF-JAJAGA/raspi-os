@@ -1,21 +1,16 @@
 #include "sched.h"
+#include "constants.h"
 #include "hw.h"
 #include "phyAlloc.h"
 
 // GLOBAL
 #define NB_PRIORITY 256
 
-const unsigned int WORD_SIZE = 4; // ARM word size (32 bits)
-const unsigned int NUMBER_REGISTERS = 14; // 13 all purpose registers (r0-r12) + lr
-
 // STATIC
 static struct pcb_s * priority_array[NB_PRIORITY] = {NULL};
 
 static const unsigned int CPSR_SVC_NO_IRQ = 0x53; // Supervisor mode (with no interrupts)
 static const unsigned int CPSR_SVC_IRQ = 0x13; // Supervisor mode (with interrupts)
-static const unsigned int CPSR_USER_IRQ = 0x10; // Supervisor mode (with interrupts)
-static const unsigned int CPSR_SYSTEM_IRQ = 0x1F; // Supervisor mode (with interrupts)
-
 
 // Initialized to NULL (when not allocated)
 static struct pcb_s *current_ps = NULL;
@@ -46,14 +41,14 @@ init_pcb(func_t f, void *args, unsigned int stack_size_words, unsigned int prior
 	pcb->stack_size_words = stack_size_words;
 
 	// The stack base points to the lowest address (last octet cell of the stack)
-	uint8_t *stack_base = (uint8_t *) phyAlloc_alloc(stack_size_words * WORD_SIZE);
+	uint8_t *stack_base = (uint8_t *) phyAlloc_alloc(stack_size_words * WORD_SIZE_OCT);
 
 	// Positioning the pointer to the first (word) cell of the stack (highest address)
+	stack_base += stack_size_words * WORD_SIZE_OCT - WORD_SIZE_OCT;
 	pcb->stack = (uint32_t *) stack_base;
-	pcb->stack += stack_size_words - 1;
 
 	// Initializing the first cell of the stack to the supervisor execution mode
-	*pcb->stack = CPSR_USER_IRQ; // with interrupts enabled
+	*pcb->stack = CPSR_SVC_IRQ; // with interrupts enabled
 
 	// As the process is STATE_NEW, pushing the address of the code launching new processes
 	--(pcb->stack);
@@ -108,8 +103,7 @@ highest_priority() {
 		process_prio = priority_array[i];
 	}
 
-	// If we did not find any process in the array, we return idle_ps
-	return NULL == process_prio ? idle_ps : process_prio;
+	return process_prio;
 }
 
 /**
@@ -154,6 +148,7 @@ elect() {
 
 	do {
 		current_ps = highest_priority();
+		current_ps = current_ps == NULL ? idle_ps : current_ps;
 		current_ps = next_alive(current_ps->previous);
 	} while (current_ps == NULL);
 
@@ -192,6 +187,7 @@ create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int
 		pcb_first->previous = new_ps;
 	}
 
+	set_tick_and_enable_timer();
 	ENABLE_IRQ();
 }
 
@@ -203,6 +199,15 @@ set_current_paused(unsigned int qt_count) {
 	//current_ps->instruction = instr;
 }
 
+/*
+// Sets the `current_ps` to STATE_PAUSED (but does not switch)
+void
+set_current_paused(unsigned int qt_count, func_t instr) {
+	current_ps->state = STATE_PAUSED;
+	current_ps->qt_count = qt_count;
+	current_ps->instruction = instr;
+}
+*/
 void
 __attribute__((naked)) ctx_switch_from_handler()
 {
@@ -233,8 +238,10 @@ __attribute__((naked)) ctx_switch_from_handler()
  */
 void
 __attribute__((naked)) ctx_switch() {
-	__asm("srsdb sp!, #0x1F");
-	__asm("cps #0x1F");
+	DISABLE_IRQ();
+
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
 	// Saving current context
 	__asm("push {r0-r12,lr}");
@@ -249,6 +256,9 @@ __attribute__((naked)) ctx_switch() {
 	__asm("mov lr, %0" : : "r" (current_ps->instruction));
 	__asm("pop {r0-r12,lr}");
 
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();
+
 	__asm("rfeia sp!");
 }
 
@@ -262,8 +272,8 @@ ctx_switch_from_irq() {
 	DISABLE_IRQ();
 
 	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x1F");
-	__asm("cps #0x1F");
+	__asm("srsdb sp!, #0x13");
+	__asm("cps #0x13");
 
 	// Saving current context
 	__asm("push {r0-r12, lr}");
@@ -285,7 +295,7 @@ ctx_switch_from_irq() {
 }
 
 // Loops infinitely, switching from current_ps to the next ps
-static void
+void
 infinite_switching(void *unused) {
 	for (;;) {
 		// If idle becomes a zombie; check next_alive (does not support it yet)
@@ -293,26 +303,25 @@ infinite_switching(void *unused) {
 	}
 }
 
-// Launching the infinite scheduling of all ps
+// Does nothing
+void nothing(void *unused) { }
+
+// Launching the scheduling of all ps (when no ps, goes to idle_handler)
 void
-start_sched(unsigned int stack_size_words) {
+start_sched(unsigned int stack_size_words, func_t idle_handler, void *args) {
+	// Default handler: infinite_switching
+	idle_handler = idle_handler == NULL ? infinite_switching : idle_handler;
+
 	// Creating the process, without inserting it in the priority array
 	// (priority is not used)
-	idle_ps = init_pcb(infinite_switching, NULL, stack_size_words, 0);
+	idle_ps = init_pcb(NULL, NULL, stack_size_words, 0);
 	idle_ps->pid = 0;
 	idle_ps->previous = idle_ps;
 	idle_ps->next = idle_ps;
 
 	current_ps = idle_ps;
-	
-	ctx_switch();
-}
 
-// Forcing the idle process to stop
-void
-end_sched() {
-	idle_ps->state = STATE_ZOMBIE;
-	remove_priority(idle_ps);
-	free_process(idle_ps);
+	ctx_switch();
+	idle_handler(args);
 }
 
