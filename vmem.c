@@ -65,6 +65,20 @@ init_kern_translation_table (void) {
 		}
 	}
 
+	/**
+	 * In order to check whether a frame is being used or not, there is a frame descriptor for each frame
+	 */
+	uint8_t *frame_table = (uint8_t *) FRAME_TABLE_BASE;
+	for (unsigned int i = 0; i <= DEVICES_SECT_MAX; ++i) {
+		for (unsigned int j = 0; j < TT2_SIZE_WRD; ++j) {
+			if (i <= KERNEL_SECT_MAX || i >= DEVICES_SECT_MIN) {
+				frame_table[i*TT2_SIZE_WRD + j] = 1; // Used
+			} else {
+				frame_table[i*TT2_SIZE_WRD + j] = 0; // Free
+			}
+		}
+	}
+
 	return 0;	
 }
 
@@ -100,6 +114,64 @@ void configure_mmu_C() {
  	 * Every mapped section/page is in domain 0
  	 */ 
 	__asm volatile ("mcr p15, 0, %[r], c3, c0, 0" :: [r] "r" (0x3));
+}
+
+// Premature optimization is the root of all evil - Donald Knuth
+
+uint8_t *
+vMem_Alloc(unsigned int nbPages) {
+	unsigned int virtualAddress; // Virtual address returned to the user
+	unsigned int nbContiguous = 0;
+
+	if (0 == nbPages) return 0;
+
+	// Iterate through the pages array until we find nbPages of contiguous free pages
+	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
+	for (unsigned int i = KERNEL_SECT_MAX + 1; i < TT1_SIZE_WRD; ++i) {
+		unsigned int *tt2_base = (unsigned int *) (tt1_base[i] & 0xFFFFFC00); // Ignoring the flags
+
+		for (unsigned int j = 0; j < TT2_SIZE_WRD; ++j) {
+
+			if (0 == (tt2_base[j] & 0b11)) { // if it is free (translation fault)
+
+				if (0 == nbContiguous) {
+					virtualAddress = i << 20 | j << 12;
+				}
+
+				// If we manage to find nbPages contiguous free pages, we stop the 1st loop
+				if (nbContiguous == nbPages) {
+					break;
+				}
+
+				nbContiguous++;
+			} else {
+				nbContiguous = 0;
+			}
+		}
+
+		// If we manage to find nbPages contiguous free pages, we stop the 2nd loop
+		if (nbContiguous == nbPages) {
+			break;
+		}
+	}
+
+	if (nbContiguous != nbPages) return 0;
+
+	uint8_t *frame_table = (uint8_t *) FRAME_TABLE_BASE;
+	unsigned int nbAllocated = 0;
+	unsigned int firstI = virtualAddress >> 20;
+	unsigned int firstJ = (virtualAddress >> 12) & 0xFFF;
+	unsigned int currentI = firstI;
+	unsigned int currentJ = firstJ;
+	for (unsigned int i = 0; i < FRAME_TABLE_SIZE_OCT && nbAllocated < nbPages; ++i) {
+		if (0 == frame_table[i]) {
+			
+			frame_table[i] = 1;
+			++nbAllocated;
+		}
+	}
+
+	return (uint8_t *) virtualAddress;
 }
 
 unsigned int

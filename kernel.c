@@ -65,7 +65,9 @@ kmain ( void )
 {
 	// Initialize hardware
 	init_hw();
+	configure_mmu_C();
 	init_kern_translation_table();
+	start_mmu_C();
 
 	for (unsigned int i = 0; i < 0x500000; ++i) {
 		if (i != translate(i)) {
