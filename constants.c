@@ -18,7 +18,9 @@ const unsigned int OFFSET_RANGE_OCT     = 0x1000; // Number of accessible addres
 const unsigned int KERNEL_SECT_MAX      =    0x4; // Number of the last reserved section (TT1 entry) for the kernel (first is 0)
 const unsigned int DEVICES_SECT_MIN     =  0x200; // Number of the first reserved section (TT1 entry) for the devices
 const unsigned int DEVICES_SECT_MAX     =  0x20F; // Number of the last reserved section (TT1 entry) for the devices
-const unsigned int FRAME_TABLE_SIZE_OCT = 0x8400; // Size of the frame table (each cell is one octet)
+
+// Should the FRAME_TABLE_SIZE_OCT be 0x21000? Depends on whether we access per octet (0x21000), or per word (4 times smaller)
+const unsigned int FRAME_TABLE_SIZE_OCT = 0x21000; // Size of the frame table (each cell is one octet)
 
 // Constant address
 const unsigned int TT1_BASE = 0x48000; // Adress of the level 1 Translation Table

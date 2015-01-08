@@ -155,23 +155,46 @@ vMem_Alloc(unsigned int nbPages) {
 		}
 	}
 
-	if (nbContiguous != nbPages) return 0;
+	if (nbContiguous < nbPages) return 0;
 
 	uint8_t *frame_table = (uint8_t *) FRAME_TABLE_BASE;
 	unsigned int nbAllocated = 0;
+	unsigned int nbFreeFrames = 0;
+
+	for (unsigned int f = 0; f < FRAME_TABLE_SIZE_OCT; ++f) {
+		if (0 == frame_table[f]) nbFreeFrames++;
+	}
+
+	if (nbFreeFrames < nbPages) return 0;
+
 	unsigned int firstI = virtualAddress >> 20;
 	unsigned int firstJ = (virtualAddress >> 12) & 0xFFF;
 	unsigned int currentI = firstI;
 	unsigned int currentJ = firstJ;
-	for (unsigned int i = 0; i < FRAME_TABLE_SIZE_OCT && nbAllocated < nbPages; ++i) {
-		if (0 == frame_table[i]) {
-			
-			frame_table[i] = 1;
+
+	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
+	for (unsigned int f = 0; nbAllocated < nbPages; ++f) {
+		unsigned int *tt2_base = (unsigned int *) (tt1_base[currentI] & 0xFFFFFC00); // Ignoring the flags
+		if (0 == frame_table[f]) {
+			tt2_base[currentJ] = currentI*TT2_SIZE_WRD*OFFSET_RANGE_OCT + currentJ*OFFSET_RANGE_OCT;
+
+			frame_table[f] = 1;
 			++nbAllocated;
+		}
+
+		++currentJ;
+		if (currentJ >= TT2_SIZE_WRD) {
+			currentJ = 0;
+			++currentI;
 		}
 	}
 
 	return (uint8_t *) virtualAddress;
+}
+
+void
+vMem_free(uint8_t *to_free, unsigned int nbPages) {
+	
 }
 
 unsigned int
