@@ -172,7 +172,6 @@ vMem_Alloc(unsigned int nbPages) {
 	unsigned int currentI = firstI;
 	unsigned int currentJ = firstJ;
 
-	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
 	for (unsigned int f = 0; nbAllocated < nbPages; ++f) {
 		unsigned int *tt2_base = (unsigned int *) (tt1_base[currentI] & 0xFFFFFC00); // Ignoring the flags
 		if (0 == frame_table[f]) {
