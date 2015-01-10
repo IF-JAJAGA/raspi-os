@@ -55,20 +55,18 @@ funcReboot(void *a)
 	sys_reboot();
 }
 
-typedef enum bool_e {false, true} bool;
-bool debug_ok = true;
-
 void alloc_test(void *unused)
 {
-	uint8_t *p;
-
-	p = vmem_alloc(0);
-	if (0 != p) debug_ok = false;
+	uint8_t *p = vmem_alloc(0);
+	uint8_t *p2;
 
 	p = vmem_alloc(1);
-	if (0 == p) debug_ok = false;
-
-	debug_ok = true;
+	*p = 0x42;
+	vmem_free(p, 1);
+	p = vmem_alloc(12);
+	p2 = vmem_alloc(2);
+	vmem_free(p, 12);
+	vmem_free(p2, 2);
 }
 
 //------------------------------------------------------------------------
@@ -80,21 +78,10 @@ kmain ( void )
 	init_hw();
 	configure_mmu_C();
 	init_kern_translation_table();
-	start_mmu_C();
 
+	// Normally works, commented out just to make sure you have no problem:
+//	start_mmu_C();
 
-	uint8_t *p = vmem_alloc(0);
-	uint8_t *p2;
-
-	p = vmem_alloc(1);
-	*p = 0x42;
-	vmem_free(p, 1);
-	p = vmem_alloc(12);
-	p2 = vmem_alloc(2);
-	vmem_free(p, 12);
-	vmem_free(p2, 2);
-
-/*
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
@@ -103,7 +90,6 @@ kmain ( void )
 	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
 	start_sched(STACK_SIZE_WORDS, nothing, NULL);
-*/
 
 	return 0;
 }
