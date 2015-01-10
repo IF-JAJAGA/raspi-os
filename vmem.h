@@ -18,5 +18,11 @@ configure_mmu_C();
 unsigned int
 translate(unsigned int va);
 
+uint8_t *
+vmem_alloc(unsigned int nbPages);
+
+void
+vmem_free(uint8_t *to_free, unsigned int nbPages);
+
 #endif
 

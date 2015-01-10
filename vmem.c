@@ -119,7 +119,7 @@ void configure_mmu_C() {
 // Premature optimization is the root of all evil - Donald Knuth
 
 uint8_t *
-vMem_Alloc(unsigned int nbPages) {
+vmem_alloc(unsigned int nbPages) {
 	unsigned int virtualAddress; // Virtual address returned to the user
 	unsigned int nbContiguous = 0;
 
@@ -127,10 +127,10 @@ vMem_Alloc(unsigned int nbPages) {
 
 	// Iterate through the pages array until we find nbPages of contiguous free pages
 	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
-	for (unsigned int i = KERNEL_SECT_MAX + 1; i < TT1_SIZE_WRD; ++i) {
+	for (unsigned int i = KERNEL_SECT_MAX + 1; nbContiguous < nbPages && i < TT1_SIZE_WRD; ++i) {
 		unsigned int *tt2_base = (unsigned int *) (tt1_base[i] & 0xFFFFFC00); // Ignoring the flags
 
-		for (unsigned int j = 0; j < TT2_SIZE_WRD; ++j) {
+		for (unsigned int j = 0; nbContiguous < nbPages && j < TT2_SIZE_WRD; ++j) {
 
 			if (0 == (tt2_base[j] & 0b11)) { // if it is free (translation fault)
 
@@ -138,20 +138,10 @@ vMem_Alloc(unsigned int nbPages) {
 					virtualAddress = i << 20 | j << 12;
 				}
 
-				// If we manage to find nbPages contiguous free pages, we stop the 1st loop
-				if (nbContiguous == nbPages) {
-					break;
-				}
-
 				nbContiguous++;
 			} else {
 				nbContiguous = 0;
 			}
-		}
-
-		// If we manage to find nbPages contiguous free pages, we stop the 2nd loop
-		if (nbContiguous == nbPages) {
-			break;
 		}
 	}
 
@@ -168,23 +158,24 @@ vMem_Alloc(unsigned int nbPages) {
 	if (nbFreeFrames < nbPages) return 0;
 
 	unsigned int firstI = virtualAddress >> 20;
-	unsigned int firstJ = (virtualAddress >> 12) & 0xFFF;
+	unsigned int firstJ = (virtualAddress >> 12) & 0xFF;
 	unsigned int currentI = firstI;
 	unsigned int currentJ = firstJ;
 
 	for (unsigned int f = 0; nbAllocated < nbPages; ++f) {
 		unsigned int *tt2_base = (unsigned int *) (tt1_base[currentI] & 0xFFFFFC00); // Ignoring the flags
 		if (0 == frame_table[f]) {
-			tt2_base[currentJ] = currentI*TT2_SIZE_WRD*OFFSET_RANGE_OCT + currentJ*OFFSET_RANGE_OCT;
+			tt2_base[currentJ] = normal_flags |
+					currentI*TT2_SIZE_WRD*OFFSET_RANGE_OCT + currentJ*OFFSET_RANGE_OCT;
 
 			frame_table[f] = 1;
 			++nbAllocated;
-		}
 
-		++currentJ;
-		if (currentJ >= TT2_SIZE_WRD) {
-			currentJ = 0;
-			++currentI;
+			++currentJ;
+			if (currentJ >= TT2_SIZE_WRD) {
+				currentJ = 0;
+				++currentI;
+			}
 		}
 	}
 
@@ -192,8 +183,22 @@ vMem_Alloc(unsigned int nbPages) {
 }
 
 void
-vMem_free(uint8_t *to_free, unsigned int nbPages) {
-	
+vmem_free(uint8_t *to_free, unsigned int nbPages) {
+	unsigned int virtualAddress = (unsigned int) to_free;
+	unsigned int tt1_index = virtualAddress >> 20;
+	unsigned int tt2_index = (virtualAddress >> 12) & 0xFF;
+
+	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
+	unsigned int *tt2_base = (unsigned int *) (tt1_base[tt1_index] & 0xFFFFFC00);
+	unsigned int *tt2_end = tt2_base + tt2_index + nbPages;
+
+	for (unsigned int *tt2_cell = tt2_base + tt2_index; tt2_cell < tt2_end; ++tt2_cell) {
+		uint8_t *frame_table = (uint8_t *) FRAME_TABLE_BASE;
+		// Getting the frame cell (index is address of the frame divided by size of frame)
+		uint8_t *frame_cell = frame_table + ((*tt2_cell & 0xFFFFF000) >> 12); // >> 12 is / PAGE_SIZE_OCT
+		*frame_cell = 0;
+		*tt2_cell &= 0xFFFFFFFC; // Setting the 2 last bits to 0: translation fault
+	}
 }
 
 unsigned int

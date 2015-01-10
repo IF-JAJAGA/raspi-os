@@ -55,11 +55,24 @@ funcReboot(void *a)
 	sys_reboot();
 }
 
+typedef enum bool_e {false, true} bool;
+bool debug_ok = true;
+
+void alloc_test(void *unused)
+{
+	uint8_t *p;
+
+	p = vmem_alloc(0);
+	if (0 != p) debug_ok = false;
+
+	p = vmem_alloc(1);
+	if (0 == p) debug_ok = false;
+
+	debug_ok = true;
+}
+
 //------------------------------------------------------------------------
 
-typedef enum bool_e {false, true} bool;
-
-bool debug_ok = true;
 int
 kmain ( void )
 {
@@ -69,29 +82,19 @@ kmain ( void )
 	init_kern_translation_table();
 	start_mmu_C();
 
-	for (unsigned int i = 0; i < 0x500000; ++i) {
-		if (i != translate(i)) {
-			debug_ok = false;
-		}
-	}
-	for (unsigned int i = 0x500000; i < 0x20000000; ++i) {
-		if (0 != translate(i)) {
-			debug_ok = false;
-		}
-	}
-	for (unsigned int i = 0x20000000; i < 0x20FFFFFF; ++i) {
-		if (i != translate(i)) {
-			debug_ok = false;
-		}
-	}
-	for (unsigned int i = 0x20FFFFFF; i <= 0xFFFFFFFF; ++i) {
-		if (0 != translate(i)) {
-			debug_ok = false;
-		}
-	}
 
-	debug_ok = false;
+	uint8_t *p = vmem_alloc(0);
+	uint8_t *p2;
 
+	p = vmem_alloc(1);
+	*p = 0x42;
+	vmem_free(p, 1);
+	p = vmem_alloc(12);
+	p2 = vmem_alloc(2);
+	vmem_free(p, 12);
+	vmem_free(p2, 2);
+
+/*
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
@@ -100,6 +103,7 @@ kmain ( void )
 	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
 	start_sched(STACK_SIZE_WORDS, nothing, NULL);
+*/
 
 	return 0;
 }
