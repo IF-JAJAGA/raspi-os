@@ -13,30 +13,31 @@ const unsigned int TOTAL_NB_PS = 5;
 void
 funcA(void *a)
 {
+	printf("1");
 	long cptA = 1;
 
 	while (cptA < 10) {
 		cptA += 2;
 	}
 	cptA = 0;
-        drawCharacter("1");
 }
 
 void
 funcB(void *a)
 {
+	printf("2");
 	int cptB = 1;
 
 	while (cptB < 20) {
 		cptB += 2;
 		sys_wait(2);
 	}
-        drawCharacter("2");
 }
 
 void
 funcC(void *a)
 {
+	printf("3");
 	// We create two more processes
 	create_process(funcA, a, STACK_SIZE_WORDS, 15);
 	create_process(funcA, a, STACK_SIZE_WORDS, 4);
@@ -82,8 +83,6 @@ kmain ( void )
 
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
-	
-	printf("0123456789 9876543210");
 
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);

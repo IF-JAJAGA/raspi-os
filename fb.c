@@ -465,7 +465,6 @@ void printf(char* chaine){
   }
 }
 
-
 /*
  * Rempli l'écran de rouge
  */

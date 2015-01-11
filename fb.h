@@ -66,4 +66,9 @@ void drawBlue();
 
 void drawYellow();
 
+void drawLine(struct Point begin, struct Point end);
+
+void drawCharacter(char* c);
+
+void printf(char* chaine);
 #endif
