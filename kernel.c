@@ -17,7 +17,7 @@ funcA(void *a)
 		cptA += 2;
 	}
 	cptA = 0;
-	drawRed();
+        drawCharacter("1");
 }
 
 void
@@ -28,7 +28,7 @@ funcB(void *a)
 	while (cptB < 20) {
 		cptB += 2;
 	}
-	drawBlue();
+        drawCharacter("2");
 }
 
 void
@@ -37,7 +37,6 @@ funcC(void *a)
 	// We create two more processes
 	create_process(funcA, a, STACK_SIZE_WORDS, 15);
 	create_process(funcA, a, STACK_SIZE_WORDS, 4);
-	drawYellow();
 }
 
 void
@@ -81,20 +80,13 @@ kmain ( void )
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
 	
-	/*
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
 	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
 	// create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
 	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
-	*/
-	//start_sched(STACK_SIZE_WORDS, nothing, NULL);
-
-	for(int i=0 ; i<100000 ; i++){
-          drawCharacter("1");
-	  drawCharacter("2");
-	}
+	start_sched(STACK_SIZE_WORDS, nothing, NULL);
 
 	return 0;
 }
