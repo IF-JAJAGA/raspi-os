@@ -81,6 +81,7 @@ kmain ( void )
 	init_hw();
 	configure_mmu_C();
 	init_kern_translation_table();
+	FramebufferInitialize();
 
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
