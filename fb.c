@@ -319,9 +319,20 @@ void drawCharacter(char* c){
   }else{
     cursor.x += (charSize + charSize/2);
   }
-
-
 }
+
+/*
+ * Affiche la chaine de caractères chaine.
+ */
+void printf(char* chaine){
+  int i=0;
+  while(1){
+    char c = *(chaine+i++);
+    if(c == '\000')	return;
+    drawCharacter(&c);
+  }
+}
+
 
 /*
  * Rempli l'écran de rouge

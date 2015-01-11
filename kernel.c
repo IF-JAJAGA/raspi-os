@@ -80,6 +80,8 @@ kmain ( void )
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
 	
+	printf("12");
+
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
