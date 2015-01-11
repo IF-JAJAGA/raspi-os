@@ -1,7 +1,4 @@
 #include "sched.h"
-#include "constants.h"
-#include "hw.h"
-#include "phyAlloc.h"
 
 // GLOBAL
 #define NB_PRIORITY 256
@@ -199,6 +196,12 @@ set_current_paused(unsigned int qt_count) {
 	//current_ps->instruction = instr;
 }
 
+void
+store_sp_and_lr(uint32_t sp, func_t lr){
+	current_ps->instruction = lr;
+	current_ps->stack = sp;
+}
+
 /*
 // Sets the `current_ps` to STATE_PAUSED (but does not switch)
 void
@@ -211,21 +214,23 @@ set_current_paused(unsigned int qt_count, func_t instr) {
 void
 __attribute__((naked)) ctx_switch_from_handler()
 {
-	__asm("sub lr, lr, #4");
-	__asm("srsdb sp!, #0x13");
-	__asm("cps #0x13");
-
-	// Saving current context
-	__asm("push {r0-r12}");
-	__asm("mov %0, sp" : "= r" (current_ps->stack));
-
+	unsigned int nbQuantums;
+	__asm("mov %0, r1" : "=r"(nbQuantums));
+	//__asm("mov %0, sp" : "=r"(current_ps->stack));
+	
+	current_ps->state = STATE_PAUSED;
+	current_ps->qt_count = nbQuantums;
+		
 	// Electing the next current_ps
 	elect();
 
 	// Restoring context
 	__asm("mov sp, %0" : : "r" (current_ps->stack));
 	__asm("mov lr, %0" : : "r" (current_ps->instruction));
-	__asm("pop {r0-r12}");
+	__asm("pop {r0-r12, lr}");
+	
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();
 
 	__asm("rfeia sp!");
 

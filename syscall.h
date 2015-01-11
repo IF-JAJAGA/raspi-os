@@ -1,3 +1,10 @@
+#ifndef SYSCALL_H
+#define SYSCALL_H
+
+#include "hw.h"
+#include "sched.h"
+#include "constants.h"
+
 /**
  * Fonction qui déclenche une interruption logicielle
  * qui reboot le matériel et le noyau de notre mini-OS
@@ -25,3 +32,4 @@ void doSysCallReboot();
  * Fonction qui fait attendre le processus de nbQuantum
  */
 void doSysCallWait();
+#endif

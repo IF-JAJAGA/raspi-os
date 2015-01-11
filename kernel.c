@@ -29,6 +29,7 @@ funcB(void *a)
 
 	while (cptB < 20) {
 		cptB += 2;
+		sys_wait(2);
 	}
 	drawBlue();
 }

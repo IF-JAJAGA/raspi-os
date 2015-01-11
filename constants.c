@@ -19,8 +19,18 @@ const unsigned int KERNEL_SECT_MAX  =      0x4; // Number of the last reserved s
 const unsigned int DEVICES_SECT_MIN =    0x200; // Number of the first reserved section (TT1 entry) for the devices
 const unsigned int DEVICES_SECT_MAX =    0x20F; // Number of the last reserved section (TT1 entry) for the devices
 
+const unsigned int SYS_REBOOT = 1;				//	Number of SysCall reboot
+const unsigned int SYS_WAIT = 2;				//	Number of SysCall wait
+
+const int PM_RSTC = 0x2010001c;
+const int PM_WDOG = 0x20100024;
+const int PM_PASSWORD = 0x5a000000;
+const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
+
 // Constant address
 const unsigned int TT1_BASE = 0x48000; // Adress of the level 1 Translation Table
+
+
 
 // Calculated constants (see comments)
 const unsigned int TT1_SIZE_OCT      =   0x4000; // TT1_SIZE_WRD * WORD_SIZE_OCT
