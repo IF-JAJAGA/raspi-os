@@ -8,6 +8,16 @@ static uint32 fb_address;
 static uint32 fb_size_bytes;
 static uint32 fb_x,fb_y,pitch,depth;
 
+
+/*
+ * Permet de voir où en est le "curseur" d'écriture des caractères.
+ */
+const struct Point cursorInit = {10,10}; 
+struct Point cursor = {10,10};
+
+const uint8 charSize = 10;
+
+
 /*
  * Fonction pour lire et écrire dans les mailboxs
  */
@@ -229,6 +239,232 @@ void draw() {
     }
   }
 }
+
+/*
+* Trace une ligne du point begin au point end.
+*/
+void drawLine(struct Point begin, struct Point end){
+  if(	begin.x < 0 || begin.x > fb_x	||
+	begin.y < 0 || begin.y > fb_y	||
+	end.x < 0 || end.x > fb_x	||
+	end.y < 0 || end.y > fb_y){
+	  return;
+	}
+
+  uint8 red=255,green=255,blue=255;
+  uint32 x=begin.x, y=begin.y;
+  do{
+      put_pixel_RGB24(x,y,red,green,blue);
+      if(x!=end.x){
+        (x>end.x)?x--:x++;
+      }
+      if(y!=end.y){
+        (y>end.y)?y--:y++;
+      }
+  }
+  while(x != end.x || y != end.y);
+  
+}
+
+void drawCharacter(char* c){
+  uint8 intC = (uint8)*c;
+  if(intC==48){ //0
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.y += 2*charSize;	end.y += 2*charSize;
+    drawLine(begin, end);
+
+    end.x = cursor.x;		end.y = cursor.y;
+    drawLine(begin, end);
+
+    begin.x += charSize;	end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==49){ //1
+    struct Point begin = cursor;
+    begin.x += charSize/2;
+    begin.y += charSize/2;
+    struct Point end = cursor;
+    end.x += charSize;
+    drawLine(begin, end);
+    
+    begin = cursor;
+    begin.x += charSize;
+    end = begin;
+    end.y += 2*charSize;
+
+    drawLine(begin, end); 
+  }
+  else if(intC==50){//2
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += charSize; 
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==51){//3
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += 2*charSize;
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;		begin.y = cursor.y+charSize;
+    end.x = begin.x+charSize;	end.y = begin.y;
+    drawLine(begin, end);
+  }
+  else if(intC==52){//4
+    struct Point begin = {cursor.x, cursor.y+charSize};
+    struct Point end = {begin.x+charSize, begin.y};
+    drawLine(begin, end);
+
+    end.x = begin.x + charSize/2;	end.y = cursor.y;
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.y += 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==53){//5
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+   
+    end.x = begin.x;	end.y += charSize;
+    drawLine(begin, end);
+  
+    begin.x = end.x;	begin.y = end.y;
+    end.x += charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += charSize; 
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==54){//6
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y - charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;	begin.y = cursor.y;
+    end.x = cursor.x;	end.y = cursor.y + 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==55){//7
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+     
+    begin.x = end.x;	begin.y = end.y;
+    end.x = cursor.x;	end.y += 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==56){//8
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+  
+    end.x = cursor.x;	end.y = cursor.y;
+    drawLine(begin, end);
+
+    begin.x += charSize;	end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==57){//9
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;		begin.y = cursor.y;
+    end.x = cursor.x;		end.y = cursor.y+charSize;
+    drawLine(begin, end);
+
+    begin.x += charSize;
+    end.x += charSize;		end.y += charSize;
+    drawLine(begin, end);
+  }
+
+
+  //Mise à jour du curseur
+  if(fb_x - cursor.x < 2*charSize){
+    cursor.x = 10;
+    if(fb_y - cursor.y < 3*charSize){
+      cursor.y = 10;
+      //On fait un clean de l'écran
+      drawBlue();
+    }else{
+      cursor.y += (2*charSize + charSize/2);
+    }
+  }else{
+    cursor.x += (charSize + charSize/2);
+  }
+}
+
+/*
+ * Affiche la chaine de caractères chaine.
+ */
+void printf(char* chaine){
+  int i=0;
+  while(1){
+    char c = *(chaine+i++);
+    if(c == '\000')	return;
+    drawCharacter(&c);
+  }
+}
+
 
 /*
  * Rempli l'écran de rouge

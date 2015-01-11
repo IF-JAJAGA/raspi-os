@@ -19,7 +19,7 @@ funcA(void *a)
 		cptA += 2;
 	}
 	cptA = 0;
-	drawRed();
+        drawCharacter("1");
 }
 
 void
@@ -31,7 +31,7 @@ funcB(void *a)
 		cptB += 2;
 		sys_wait(2);
 	}
-	drawBlue();
+        drawCharacter("2");
 }
 
 void
@@ -40,16 +40,13 @@ funcC(void *a)
 	// We create two more processes
 	create_process(funcA, a, STACK_SIZE_WORDS, 15);
 	create_process(funcA, a, STACK_SIZE_WORDS, 4);
-	drawYellow();
 }
 
 void
 funcWait(void *a)
 {
-	int b;
 	// Call wait
 	sys_wait(2);
-	b = 42;
 }
 
 void
@@ -85,6 +82,8 @@ kmain ( void )
 
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
+	
+	printf("0123456789 9876543210");
 
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);

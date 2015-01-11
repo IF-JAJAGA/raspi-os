@@ -8,6 +8,7 @@ AS_FILES=vectors.s
 
 OBJS = $(patsubst %.s,%.o,$(AS_FILES))
 OBJS += $(patsubst %.c,%.o,$(C_FILES))
+AUDIO=tune.o
 
 .PHONY: gcc clean
 
@@ -23,6 +24,9 @@ clean :
 	rm -f *.bc
 	rm -f *.clang.opt.s
 	rm -f *~
+
+tune.o : tune.wav
+	$(ARMGNU)-ld -s -r -o $@ -b binary $^
 
 %.o : %.c
 	$(ARMGNU)-gcc $(CFLAGS) -c $< -o $@

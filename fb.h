@@ -8,6 +8,14 @@
 
 
 /*
+ * Struct permettant de définir un point
+ */
+struct Point{
+	uint32 x;
+	uint32 y;
+};
+
+/*
  * Mailbox functions
  */
 
