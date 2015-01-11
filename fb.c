@@ -268,7 +268,21 @@ void drawLine(struct Point begin, struct Point end){
 
 void drawCharacter(char* c){
   uint8 intC = (uint8)*c;
-  if(intC==49){ //1
+  if(intC==48){ //0
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.y += 2*charSize;	end.y += 2*charSize;
+    drawLine(begin, end);
+
+    end.x = cursor.x;		end.y = cursor.y;
+    drawLine(begin, end);
+
+    begin.x += charSize;	end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==49){ //1
     struct Point begin = cursor;
     begin.x += charSize/2;
     begin.y += charSize/2;
@@ -302,6 +316,124 @@ void drawCharacter(char* c){
     
     begin.x = end.x;	begin.y = end.y;
     end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==51){//3
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += 2*charSize;
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;		begin.y = cursor.y+charSize;
+    end.x = begin.x+charSize;	end.y = begin.y;
+    drawLine(begin, end);
+  }
+  else if(intC==52){//4
+    struct Point begin = {cursor.x, cursor.y+charSize};
+    struct Point end = {begin.x+charSize, begin.y};
+    drawLine(begin, end);
+
+    end.x = begin.x + charSize/2;	end.y = cursor.y;
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.y += 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==53){//5
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+   
+    end.x = begin.x;	end.y += charSize;
+    drawLine(begin, end);
+  
+    begin.x = end.x;	begin.y = end.y;
+    end.x += charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += charSize; 
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==54){//6
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y - charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;	begin.y = cursor.y;
+    end.x = cursor.x;	end.y = cursor.y + 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==55){//7
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+     
+    begin.x = end.x;	begin.y = end.y;
+    end.x = cursor.x;	end.y += 2*charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==56){//8
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+  
+    end.x = cursor.x;	end.y = cursor.y;
+    drawLine(begin, end);
+
+    begin.x += charSize;	end.x += charSize;
+    drawLine(begin, end);
+  }
+  else if(intC==57){//9
+    struct Point begin = cursor;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.y += charSize;
+    end.y += charSize;
+    drawLine(begin, end);
+    
+    begin.x = cursor.x;		begin.y = cursor.y;
+    end.x = cursor.x;		end.y = cursor.y+charSize;
+    drawLine(begin, end);
+
+    begin.x += charSize;
+    end.x += charSize;		end.y += charSize;
     drawLine(begin, end);
   }
 
