@@ -8,6 +8,20 @@
 
 
 /*
+ * Struct permettant de définir un point
+ */
+struct Point{
+	uint32 x;
+	uint32 y;
+};
+
+/*
+ * Tableau de correspondance entre les chiffres et leur représentation pour l'affichage
+ */
+static uint8 tabChiffres[10] = {0b00000110, 0b00111011, 0b00101111, 0b01100100, 0b01101101,
+0b01111101, 0b01000111, 0b01111111, 0b01101111};
+
+/*
  * Mailbox functions
  */
 

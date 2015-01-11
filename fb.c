@@ -8,6 +8,16 @@ static uint32 fb_address;
 static uint32 fb_size_bytes;
 static uint32 fb_x,fb_y,pitch,depth;
 
+
+/*
+ * Permet de voir où en est le "curseur" d'écriture des caractères.
+ */
+const struct Point cursorInit = {10,10}; 
+struct Point cursor = {10,10};
+
+const uint8 charSize = 10;
+
+
 /*
  * Fonction pour lire et écrire dans les mailboxs
  */
@@ -228,6 +238,118 @@ void draw() {
       put_pixel_RGB24(x,y,red,green,blue);
     }
   }
+}
+
+/*
+* Trace une ligne du point begin au point end.
+* On admet que begin a des coordonnées inférieurs à end
+*/
+void drawLine(struct Point begin, struct Point end){
+  if(	begin.x < 0 || begin.x > fb_x	||
+	begin.y < 0 || begin.y > fb_y	||
+	end.x < 0 || end.x > fb_x	||
+	end.y < 0 || end.y > fb_y){
+	  return;
+	}
+
+  uint8 red=255,green=255,blue=255;
+  uint32 x=begin.x, y=begin.y;
+  do{
+      put_pixel_RGB24(x,y,red,green,blue);
+      if(x<end.x)	x++;
+      if(y<end.y)	y++;
+  }
+  while(x != end.x || y != end.y);
+  
+}
+
+void drawCharacter(uint8 c){
+  uint8 screenC = tabChiffres[c-1];
+
+  //On trace chaque trait si le bit lui correspondant est à 1.
+  const condition = 0b00000001;
+  if(screenC & 0b00000001){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    end.x += charSize;
+    
+    drawLine(begin,end);
+  }
+  
+  if(screenC & 0b00000010){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    begin.x += charSize;
+    end.x += charSize;
+    end.y += charSize;
+    
+    drawLine(begin,end);
+  }
+  
+  if(screenC & 0b00000100){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    begin.x += charSize;
+    begin.y += charSize;
+    end.x += charSize;
+    end.y += 2*charSize;
+    
+    drawLine(begin,end);
+  }
+  
+  if(screenC & 0b00001000){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    begin.y += 2*charSize;
+    end.y += 2*charSize;
+    end.x += charSize;
+    
+    drawLine(begin,end);
+  }
+  
+  if(screenC & 0b00010000){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    begin.y += charSize;
+    end.y += 2*charSize;
+    
+    drawLine(begin,end);
+  }
+  
+ 
+  if(screenC & 0b00100000){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    begin.y += charSize;
+    end.x += charSize;
+    end.y += charSize;
+    
+    drawLine(begin,end);
+  }
+  
+  if(screenC & 0b01000000){
+    struct Point begin = cursor;
+    struct Point end = cursor;
+    end.y += charSize;
+    
+    drawLine(begin,end);
+  }
+
+  //Mise à jour du curseur
+  if(fb_x - cursor.x < 2*charSize){
+    cursor.x = 10;
+    if(fb_y - cursor.y < 3*charSize){
+      cursor.y = 10;
+      //On fait un clean de l'écran
+      drawBlue();
+    }else{
+      cursor.y += (2*charSize + charSize/2);
+    }
+  }else{
+    cursor.x += (charSize + charSize/2);
+  }
+
+
 }
 
 /*

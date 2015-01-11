@@ -78,6 +78,7 @@ kmain ( void )
 	init_hw();
 	configure_mmu_C();
 	init_kern_translation_table();
+	FramebufferInitialize();
 
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
@@ -89,7 +90,18 @@ kmain ( void )
 	// create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
 	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
-	start_sched(STACK_SIZE_WORDS, nothing, NULL);
+	drawBlue();
+	//start_sched(STACK_SIZE_WORDS, nothing, NULL);
+	struct Point p1, p2;
+	p1.x=20;
+	p1.y=20;
+	p2.x=60;
+	p2.y=20;
+	//drawLine(p1, p2);
+
+	for(uint8 t = 1; t<10 ; t++){
+		drawCharacter(t);
+	}
 
 	return 0;
 }
