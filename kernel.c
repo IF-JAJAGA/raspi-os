@@ -43,10 +43,8 @@ funcC(void *a)
 void
 funcWait(void *a)
 {
-	int b;
 	// Call wait
 	sys_wait(2);
-	b = 42;
 }
 
 void
@@ -82,25 +80,20 @@ kmain ( void )
 
 	// Normally works, commented out just to make sure you have no problem:
 //	start_mmu_C();
-
+	
+	/*
 	// Initialize all ctx
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
 	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
 	// create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
 	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
-
-	drawBlue();
+	*/
 	//start_sched(STACK_SIZE_WORDS, nothing, NULL);
-	struct Point p1, p2;
-	p1.x=20;
-	p1.y=20;
-	p2.x=60;
-	p2.y=20;
-	//drawLine(p1, p2);
 
-	for(uint8 t = 1; t<10 ; t++){
-		drawCharacter(t);
+	for(int i=0 ; i<100000 ; i++){
+          drawCharacter("1");
+	  drawCharacter("2");
 	}
 
 	return 0;

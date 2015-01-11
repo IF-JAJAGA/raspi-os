@@ -242,7 +242,6 @@ void draw() {
 
 /*
 * Trace une ligne du point begin au point end.
-* On admet que begin a des coordonnées inférieurs à end
 */
 void drawLine(struct Point begin, struct Point end){
   if(	begin.x < 0 || begin.x > fb_x	||
@@ -256,84 +255,56 @@ void drawLine(struct Point begin, struct Point end){
   uint32 x=begin.x, y=begin.y;
   do{
       put_pixel_RGB24(x,y,red,green,blue);
-      if(x<end.x)	x++;
-      if(y<end.y)	y++;
+      if(x!=end.x){
+        (x>end.x)?x--:x++;
+      }
+      if(y!=end.y){
+        (y>end.y)?y--:y++;
+      }
   }
   while(x != end.x || y != end.y);
   
 }
 
-void drawCharacter(uint8 c){
-  uint8 screenC = tabChiffres[c-1];
+void drawCharacter(char* c){
+  uint8 intC = (uint8)*c;
+  if(intC==49){ //1
+    struct Point begin = cursor;
+    begin.x += charSize/2;
+    begin.y += charSize/2;
+    struct Point end = cursor;
+    end.x += charSize;
+    drawLine(begin, end);
+    
+    begin = cursor;
+    begin.x += charSize;
+    end = begin;
+    end.y += 2*charSize;
 
-  //On trace chaque trait si le bit lui correspondant est à 1.
-  const condition = 0b00000001;
-  if(screenC & 0b00000001){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    end.x += charSize;
-    
-    drawLine(begin,end);
+    drawLine(begin, end); 
   }
-  
-  if(screenC & 0b00000010){
+  else if(intC==50){//2
     struct Point begin = cursor;
-    struct Point end = cursor;
-    begin.x += charSize;
-    end.x += charSize;
+    struct Point end = {cursor.x+charSize, cursor.y};
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
+    end.y += charSize; 
+    drawLine(begin, end);
+    
+    begin.x = end.x;	begin.y = end.y;
+    end.x -= charSize;
+    drawLine(begin, end);
+
+    begin.x = end.x;	begin.y = end.y;
     end.y += charSize;
+    drawLine(begin, end);
     
-    drawLine(begin,end);
-  }
-  
-  if(screenC & 0b00000100){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    begin.x += charSize;
-    begin.y += charSize;
+    begin.x = end.x;	begin.y = end.y;
     end.x += charSize;
-    end.y += 2*charSize;
-    
-    drawLine(begin,end);
+    drawLine(begin, end);
   }
-  
-  if(screenC & 0b00001000){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    begin.y += 2*charSize;
-    end.y += 2*charSize;
-    end.x += charSize;
-    
-    drawLine(begin,end);
-  }
-  
-  if(screenC & 0b00010000){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    begin.y += charSize;
-    end.y += 2*charSize;
-    
-    drawLine(begin,end);
-  }
-  
- 
-  if(screenC & 0b00100000){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    begin.y += charSize;
-    end.x += charSize;
-    end.y += charSize;
-    
-    drawLine(begin,end);
-  }
-  
-  if(screenC & 0b01000000){
-    struct Point begin = cursor;
-    struct Point end = cursor;
-    end.y += charSize;
-    
-    drawLine(begin,end);
-  }
+
 
   //Mise à jour du curseur
   if(fb_x - cursor.x < 2*charSize){
