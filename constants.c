@@ -35,3 +35,15 @@ const unsigned int SECTION_SIZE_OCT  = 0x100000; // TT2_SIZE_WRD * OFFSET_RANGE_
 const unsigned int TT2_1ST_BASE      =  0x4c000; // TT1_BASE + TT1_SIZE_OCT
 const unsigned int FRAME_TABLE_BASE  = 0x44c000; // TT2_1ST_BASE + TT1_SIZE_WRD*TT2_SIZE_OCT
 
+
+// System Calls
+// ============
+
+const unsigned int SYS_REBOOT = 1; // Number of SysCall reboot
+const unsigned int SYS_WAIT = 2;   // Number of SysCall wait
+
+const int PM_RSTC = 0x2010001c;
+const int PM_WDOG = 0x20100024;
+const int PM_PASSWORD = 0x5a000000;
+const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
+

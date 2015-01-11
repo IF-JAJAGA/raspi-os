@@ -35,5 +35,5 @@
 # Hidden files
 .*
 
-# DEBUG files
+# Debug files
 debug/*

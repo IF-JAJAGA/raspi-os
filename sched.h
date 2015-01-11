@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "constants.h"
+#include "hw.h"
+#include "phyAlloc.h"
 
 typedef void (*func_t) (void *);
 
@@ -36,9 +39,16 @@ struct pcb_s {
 
 void
 create_process(func_t f, void *args, unsigned int stack_size_words, unsigned int priority);
-
+/*
 void
 set_current_paused(unsigned int qt_count, func_t instr);
+*/
+
+void
+set_current_paused(unsigned int qt_count);
+
+void
+store_sp_and_lr(uint32_t sp, func_t lr);
 
 void
 ctx_switch();

@@ -33,8 +33,18 @@ extern const unsigned int TOTAL_TT_SIZE_OCT; // 0x404000 = TT1_SIZE_OCT + TT1_SI
 extern const unsigned int SECTION_SIZE_OCT;  // 0x100000 = TT2_SIZE_WRD * OFFSET_RANGE_OCT (indexable addresses for one TT1 entry)
 
 // Calculated address
-extern const unsigned int TT2_1ST_BASE;     // 0x4c000 = TT1_BASE + TT1_SIZE_OCT
+extern const unsigned int TT2_1ST_BASE;     //  0x4c000 = TT1_BASE + TT1_SIZE_OCT
 extern const unsigned int FRAME_TABLE_BASE; // 0x44c000 = TT2_1ST_BASE + TT1_SIZE_WRD*TT2_SIZE_OCT
 
+// System Calls
+// ============
+
+extern const unsigned int SYS_REBOOT;        // 1 = Number of SysCall reboot
+extern const unsigned int SYS_WAIT;          // 2 = Number of SysCall wait
+
+extern const int PM_RSTC;                    // 0x2010001c = For SysCall Reboot
+extern const int PM_WDOG;                    // 0x20100024 = For SysCall Reboot
+extern const int PM_PASSWORD;                // 0x5a000000 = For SysCall Reboot
+extern const int PM_RSTC_WRCFG_FULL_RESET;   // 0x00000020 = For SysCall Reboot
 #endif
 

@@ -6,6 +6,8 @@
 #include "fb.h"
 #include "vmem.h"
 
+#include "constants.h"
+
 const unsigned int TOTAL_NB_PS = 5;
 
 void
@@ -27,6 +29,7 @@ funcB(void *a)
 
 	while (cptB < 20) {
 		cptB += 2;
+		sys_wait(2);
 	}
 	drawBlue();
 }
@@ -86,8 +89,8 @@ kmain ( void )
 	create_process(funcA, NULL, STACK_SIZE_WORDS, 4);
 	create_process(funcB, NULL, STACK_SIZE_WORDS, 5);
 	create_process(funcC, NULL, STACK_SIZE_WORDS, 10);
-	// create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
-	// create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
+	create_process(funcWait, NULL, STACK_SIZE_WORDS, 3);
+	create_process(funcReboot, NULL, STACK_SIZE_WORDS, 3);
 
 	start_sched(STACK_SIZE_WORDS, nothing, NULL);
 

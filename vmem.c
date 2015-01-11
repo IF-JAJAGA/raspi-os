@@ -36,7 +36,6 @@ init_kern_translation_table (void) {
 	unsigned int *tt1_base = (unsigned int *)TT1_BASE;
 	for (unsigned int i = 0; i < TT1_SIZE_WRD; ++i) {
 
-//		*tt_level_1 = ((unsigned int *)TT2_1ST_BASE) + i*TT2_SIZE_WRD;
 		tt1_base[i] =
 			0b01                            << 0 | // Bits for Coarse page table base address
 			0                               << 2 | // Bit for SBZ
@@ -166,7 +165,7 @@ vmem_alloc(unsigned int nbPages) {
 		unsigned int *tt2_base = (unsigned int *) (tt1_base[currentI] & 0xFFFFFC00); // Ignoring the flags
 		if (0 == frame_table[f]) {
 			tt2_base[currentJ] = normal_flags |
-					currentI*TT2_SIZE_WRD*OFFSET_RANGE_OCT + currentJ*OFFSET_RANGE_OCT;
+					(currentI*TT2_SIZE_WRD*OFFSET_RANGE_OCT + currentJ*OFFSET_RANGE_OCT);
 
 			frame_table[f] = 1;
 			++nbAllocated;
