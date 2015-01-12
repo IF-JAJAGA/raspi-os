@@ -147,7 +147,10 @@ elect() {
 		current_ps = highest_priority();
 		current_ps = current_ps == NULL ? idle_ps : current_ps;
 		current_ps = next_alive(current_ps->previous);
-	} while (current_ps == NULL);
+		if (current_ps->qt_count !=0 ){
+			current_ps->qt_count--;
+		}
+	} while (current_ps == NULL || current_ps->qt_count != 0);
 
 	// Should the highest priority process be the same as before
 	if (previous_ps == current_ps) {
